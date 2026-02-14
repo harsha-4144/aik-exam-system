@@ -2,7 +2,7 @@ from supabase import create_client
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 class SupabaseClient:
     def __init__(self):
