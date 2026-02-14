@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Question - Admin Panel</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #6b7280;
+            --text: #111827;
+            --text-light: #6b7280;
+            --danger: #dc2626;
+            --success: #16a34a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 1px solid #000;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .container {
+            background: var(--panel);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .form-content {
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section {
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .form-section h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .required::after {
+            content: " *";
+            color: var(--danger);
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+            color: var(--text);
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* Test Cases */
+        .test-cases-section {
+            grid-column: 1 / -1;
+        }
+
+        .test-case {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .test-case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .test-case-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .remove-test-case {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .test-case-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .example-checkbox {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .example-checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-add {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .btn-add:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Time Limit Options */
+        .time-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .time-option {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .time-option:hover,
+        .time-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>Admin Panel</div>
+    <div style="font-size: 14px; color: #9ca3af;">
+        <a href="/admin/dashboard" style="color: #9ca3af; text-decoration: none;">Dashboard</a>
+        | <a href="/" style="color: #9ca3af; text-decoration: none;">View Exam</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="container">
+        <div class="content-header">
+            <div class="breadcrumb">
+                <a href="/admin/questions"> Manage Questions</a>
+            </div>
+            <h1>Create New Question</h1>
+        </div>
+
+        <div class="form-content">
+            <form method="POST" id="questionForm">
+                <div class="form-grid">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h2>Basic Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="title" class="required">Question Title</label>
+                            <input type="text" id="title" name="title" required 
+                                   placeholder="e.g., Sum of Two Numbers">
+                            <div class="help-text">Short descriptive title</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="required">Description</label>
+                            <textarea id="description" name="description" required 
+                                      placeholder="Problem statement, input/output format, constraints..."></textarea>
+                            <div class="help-text">Markdown supported</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="marks" class="required">Marks</label>
+                            <input type="number" id="marks" name="marks" required 
+                                   value="10" min="1" max="100">
+                            <div class="help-text">Points for this question</div>
+                        </div>
+                    </div>
+
+                    <!-- Time Limit -->
+                    <div class="form-section">
+                        <h2>Time Limit</h2>
+                        
+                        <div class="form-group">
+                            <label for="time_limit" class="required">Time (minutes)</label>
+                            <input type="number" id="time_limit" name="time_limit" required 
+                                   value="30" min="1" max="180">
+                            <div class="help-text">Time allowed for this question</div>
+                        </div>
+
+                        <div class="help-text">Quick select:</div>
+                        <div class="time-options">
+                            <div class="time-option" data-minutes="5">5 min</div>
+                            <div class="time-option" data-minutes="15">15 min</div>
+                            <div class="time-option" data-minutes="30">30 min</div>
+                            <div class="time-option" data-minutes="45">45 min</div>
+                            <div class="time-option" data-minutes="60">60 min</div>
+                            <div class="time-option" data-minutes="90">90 min</div>
+                        </div>
+                    </div>
+
+                    <!-- Test Cases -->
+                    <div class="form-section test-cases-section">
+                        <h2>Test Cases</h2>
+                        
+                        <div id="testCasesContainer">
+                            <!-- Test cases will be added here -->
+                        </div>
+
+                        <button type="button" class="btn btn-add" onclick="addTestCase()">
+                            + Add Test Case
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/admin/questions" class="btn btn-secondary">Cancel</a>
+                    <div class="action-buttons">
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                        <button type="submit" class="btn btn-success">Create Question</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let testCaseCount = 0;
+
+    function addTestCase(input = "", output = "", isExample = false) {
+        testCaseCount++;
+        const container = document.getElementById('testCasesContainer');
+        
+        const testCaseDiv = document.createElement('div');
+        testCaseDiv.className = 'test-case';
+        testCaseDiv.id = `testCase-${testCaseCount}`;
+        
+        testCaseDiv.innerHTML = `
+            <div class="test-case-header">
+                <div class="test-case-title">Test Case ${testCaseCount}</div>
+                ${testCaseCount > 1 ? `
+                    <button type="button" class="remove-test-case" onclick="removeTestCase(${testCaseCount})">
+                        Remove
+                    </button>
+                ` : ''}
+            </div>
+            <div class="test-case-fields">
+                <div>
+                    <label class="required">Input</label>
+                    <textarea name="input[]" required 
+                              placeholder="Test input">${input}</textarea>
+                </div>
+                <div>
+                    <label class="required">Expected Output</label>
+                    <textarea name="output[]" required 
+                              placeholder="Expected output">${output}</textarea>
+                </div>
+            </div>
+            <div class="example-checkbox">
+                <label>
+                    <input type="checkbox" name="is_example[]" value="${testCaseCount - 1}" ${isExample ? 'checked' : ''}>
+                    Show as example to users
+                </label>
+            </div>
+        `;
+        
+        container.appendChild(testCaseDiv);
+    }
+
+    function removeTestCase(id) {
+        const element = document.getElementById(`testCase-${id}`);
+        if (element) {
+            element.remove();
+            
+            // Renumber remaining test cases
+            const testCases = document.querySelectorAll('.test-case');
+            testCases.forEach((tc, index) => {
+                const title = tc.querySelector('.test-case-title');
+                if (title) {
+                    title.textContent = `Test Case ${index + 1}`;
+                }
+                
+                // Update the example checkbox value
+                const checkbox = tc.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.value = index;
+                }
+            });
+            
+            testCaseCount = testCases.length;
+        }
+    }
+
+    // Time limit quick select
+    document.querySelectorAll('.time-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const minutes = this.getAttribute('data-minutes');
+            document.getElementById('time_limit').value = minutes;
+            
+            // Update active state
+            document.querySelectorAll('.time-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
+    });
+
+    // Add first test case on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        addTestCase();
+    });
+
+    // Form validation
+    document.getElementById('questionForm').addEventListener('submit', function(e) {
+        const testCases = document.querySelectorAll('.test-case');
+        if (testCases.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one test case.');
+            return false;
+        }
+        
+        // Validate all required fields
+        const requiredFields = this.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.style.borderColor = 'var(--danger)';
+            } else {
+                field.style.borderColor = '';
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+        
+        return isValid;
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --primary: #2563eb;
+            --dark: #111827;
+            --panel-dark: #020617;
+            --panel-border-dark: #1e293b;
+            --radius: 8px;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --success: #16a34a;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+        }
+
+        .header {
+            height: 56px;
+            background: var(--dark);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: color 0.3s ease;
+        }
+
+        .timer.warning {
+            color: var(--warning);
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            color: var(--danger);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .page {
+            height: calc(100vh - 56px);
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            gap: 12px;
+            padding: 6px 14px;
+            height: 100%;
+        }
+
+        .problem {
+            width: 36%;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .problem h2 {
+            margin-top: 0;
+            color: var(--dark);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .time-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-info svg {
+            color: var(--primary);
+        }
+
+        .right-column {
+            width: 64%;
+            min-width: 600px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 0;
+        }
+
+        .right-column.fullscreen {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            bottom: 8px;
+            padding-bottom: 4px;
+            overflow: hidden;
+            width: 100%;
+            height: calc(100vh - 56px);
+            background: var(--bg);
+            z-index: 9999;
+            padding: 8px;
+        }
+
+        .editor-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-area {
+            flex: 1;
+            position: relative;
+        }
+
+        #editor {
+            position: absolute;
+            inset: 0;
+        }
+
+        .controls {
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-dark);
+            border-top: 1px solid var(--panel-border-dark);
+        }
+
+        .controls-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .language-select {
+            background: #020617;
+            color: #e5e7eb;
+            border: 1px solid #1e293b;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .language-select:hover {
+            background: #1e293b;
+        }
+
+        .language-select option {
+            background: #020617;
+            color: #e5e7eb;
+        }
+
+        button {
+            border: none;
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .run { 
+            background: #4b5563; 
+            color: white;
+        }
+        .run:hover {
+            background: #374151;
+        }
+
+        .submit { 
+            background: var(--primary); 
+            color: white;
+        }
+        .submit:hover {
+            background: #1d4ed8;
+        }
+
+        .fullscreen-btn {
+            background: #020617;
+            color: #e5e7eb;
+            border: 1px solid #1e293b;
+        }
+        .fullscreen-btn:hover {
+            background: #1e293b;
+        }
+
+        #splitter {
+            height: 6px;
+            background: linear-gradient(to bottom, #020617, #1e293b, #020617);
+            cursor: row-resize;
+            border-top: 1px solid #1e293b;
+            border-bottom: 1px solid #1e293b;
+            flex-shrink: 0;
+        }
+
+        .output-panel {
+            background: var(--panel-dark);
+            border: 1px solid var(--panel-border-dark);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+            flex: 0.35;
+            overflow: hidden;
+        }
+
+        .output-title {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-bottom: 1px solid var(--panel-border-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .output-content {
+            flex: 1;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #e5e7eb;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            background: #0a0c10;
+        }
+
+        .output-content.awaiting-input::after {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #94a3b8;
+            vertical-align: middle;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .prompt {
+            color: #4ade80;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .input-field {
+            background: transparent;
+            border: none;
+            color: #e5e7eb;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            flex: 1;
+            outline: none;
+            padding: 2px 0;
+        }
+
+        .input-field::placeholder {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .error-output {
+            color: #f87171;
+        }
+
+        .success-output {
+            color: #4ade80;
+        }
+
+        body.dragging {
+            user-select: none;
+            cursor: row-resize;
+        }
+
+        .example {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .example h4 {
+            margin: 0 0 8px 0;
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .example pre {
+            margin: 6px 0;
+            padding: 8px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .no-examples {
+            color: #6b7280;
+            font-style: italic;
+            font-size: 14px;
+            padding: 16px 0;
+            text-align: center;
+            border: 1px dashed #e5e7eb;
+            border-radius: 6px;
+            margin-top: 12px;
+        }
+
+        .language-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 12px;
+        }
+
+        .terminal-prompt {
+            color: #4ade80;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #94a3b8;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>Coding Exam - {{ title }} <span class="language-badge" id="currentLang">Python</span></div>
+    <div id="timer" class="timer">--:--</div>
+</div>
+
+<div class="page">
+<div class="container">
+
+<div class="problem">
+    <h2>{{ title }}</h2>
+    
+    <div class="time-info">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+        </svg>
+        <span>Time Limit: {{ time_limit_minutes }} minutes</span>
+    </div>
+
+    <div>{{ description|safe }}</div>
+
+    {% if examples %}
+        <h3 style="margin-top:20px;">Examples</h3>
+        {% for ex in examples %}
+            <div class="example">
+                <h4>Example {{ loop.index }}</h4>
+                <div><strong>Input:</strong></div>
+                <pre>{{ ex[0] }}</pre>
+                <div><strong>Output:</strong></div>
+                <pre>{{ ex[1] }}</pre>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-examples">
+            No examples provided
+        </div>
+    {% endif %}
+</div>
+
+<div class="right-column" id="rightColumn">
+
+<div class="editor-panel" id="editorPanel">
+<form method="POST" action="/submit" id="codeForm" style="flex:1; display:flex; flex-direction:column;">
+    <input type="hidden" name="question_id" value="{{ question_id }}">
+    <input type="hidden" name="code" id="codeInput">
+    <input type="hidden" name="language" id="languageInput" value="python">
+
+    <div class="editor-area">
+        <div id="editor"></div>
+    </div>
+
+    <div class="controls">
+        <div class="controls-left">
+            <select id="language" class="language-select">
+                <option value="python">Python</option>
+                <option value="c">C</option>
+            </select>
+            <button type="button" class="fullscreen-btn" id="fsBtn">Full Screen</button>
+        </div>
+        <div>
+            <button type="button" class="run" onclick="runCode()">Run</button>
+            <button type="submit" class="submit">Submit</button>
+        </div>
+    </div>
+</form>
+</div>
+
+<div id="splitter"></div>
+
+<div class="output-panel" id="outputPanel">
+    <div class="output-title">
+        <span class="terminal-header">Terminal</span>
+        <span id="runStatus"></span>
+    </div>
+    <div id="output" class="output-content">
+        <span style="color: #6b7280;">&#9654; Click 'Run' to execute your code.</span>
+    </div>
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+// Monaco Editor configuration
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+
+require(['vs/editor/editor.main'], function () {
+    window.editor = monaco.editor.create(document.getElementById('editor'), {
+        value: '',  // EMPTY EDITOR - students write everything from scratch
+        language: 'python',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 14,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        renderLineHighlight: 'all',
+        wordWrap: 'on',
+        placeholder: 'Write your code here...'
+    });
+
+    // Ensure initial content is always set only after editor is ready.
+    window.editor.setValue('');
+});
+
+// Language selector - ONLY Python and C
+const languageSelect = document.getElementById('language');
+const languageInput = document.getElementById('languageInput');
+const currentLang = document.getElementById('currentLang');
+
+languageSelect.addEventListener('change', function() {
+    const lang = this.value;
+    if (!window.editor) return;
+    
+    // Update editor language
+    monaco.editor.setModelLanguage(window.editor.getModel(), lang);
+    
+    // Update hidden input and display
+    languageInput.value = lang;
+    currentLang.textContent = this.options[this.selectedIndex].text;
+    
+    // Clear the editor when switching languages
+    window.editor.setValue('');
+});
+
+// Full screen functionality
+const fsBtn = document.getElementById("fsBtn");
+const rightColumn = document.getElementById("rightColumn");
+
+fsBtn.onclick = () => {
+    rightColumn.classList.toggle("fullscreen");
+    fsBtn.textContent = rightColumn.classList.contains("fullscreen")
+        ? "Exit Full Screen"
+        : "Full Screen";
+    setTimeout(() => {
+        if (window.editor) window.editor.layout();
+    }, 100);
+};
+
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && rightColumn.classList.contains("fullscreen")) {
+        fsBtn.click();
+    }
+});
+
+// Runtime/input state
+let inputResolver = null;
+let inputBuffer = "";
+let awaitingInput = false;
+let inputMode = "single";
+let runInProgress = false;
+let activeRunId = 0;
+let currentFetchController = null;
+let cSessionId = null;
+let cCursor = 0;
+let cPollTimer = null;
+let cPollInFlight = false;
+let cPollGeneration = 0;
+let cLocalInputChars = 0;
+let cRunResolve = null;
+let cRunReject = null;
+let cInputChain = Promise.resolve();
+const RUN_RESTARTED = "__RUN_RESTARTED__";
+
+const outputEl = document.getElementById("output");
+const runStatus = document.getElementById("runStatus");
+outputEl.tabIndex = 0;
+outputEl.setAttribute("role", "textbox");
+outputEl.setAttribute("aria-label", "Terminal output and input");
+
+function setRunStatus(text) {
+    runStatus.textContent = text;
+}
+
+function pushOutput(text = "") {
+    outputEl.textContent += text;
+    outputEl.scrollTop = outputEl.scrollHeight;
+}
+
+function setInputMode(enabled) {
+    awaitingInput = enabled;
+    outputEl.classList.toggle("awaiting-input", enabled);
+    if (enabled) {
+        setRunStatus("Running (waiting for input...)");
+    } else if (runInProgress) {
+        setRunStatus("Running...");
+    }
+}
+
+function ensureRunActive(runId) {
+    if (runId !== activeRunId) {
+        throw new Error(RUN_RESTARTED);
+    }
+}
+
+function setTerminalCursor(enabled) {
+    outputEl.classList.toggle("awaiting-input", enabled);
+}
+
+function hasCSession() {
+    return Boolean(cSessionId);
+}
+
+function settleCRun(error = null) {
+    if (error) {
+        if (cRunReject) cRunReject(error);
+    } else {
+        if (cRunResolve) cRunResolve();
+    }
+    cRunResolve = null;
+    cRunReject = null;
+}
+
+function stopCPolling() {
+    cPollGeneration += 1;
+    cPollInFlight = false;
+    if (cPollTimer) {
+        clearTimeout(cPollTimer);
+        cPollTimer = null;
+    }
+    cSessionId = null;
+    cCursor = 0;
+    cLocalInputChars = 0;
+    cInputChain = Promise.resolve();
+    setTerminalCursor(false);
+}
+
+function stopCSessionOnServer(sessionIdToStop) {
+    if (!sessionIdToStop) return;
+    fetch("/run/c/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionIdToStop })
+    }).catch(() => {});
+}
+
+function cancelCurrentRun() {
+    const runningCSessionId = cSessionId;
+    activeRunId += 1;
+    runInProgress = false;
+    setInputMode(false);
+    setTerminalCursor(false);
+    inputBuffer = "";
+
+    if (currentFetchController) {
+        currentFetchController.abort();
+        currentFetchController = null;
+    }
+
+    if (inputResolver) {
+        const resolve = inputResolver;
+        inputResolver = null;
+        resolve("");
+    }
+
+    stopCSessionOnServer(runningCSessionId);
+    stopCPolling();
+    settleCRun(new Error(RUN_RESTARTED));
+}
+
+function startInput(promptText, runId, mode = "single") {
+    ensureRunActive(runId);
+    if (promptText) pushOutput(promptText);
+    outputEl.focus();
+    inputMode = mode;
+    setInputMode(true);
+    inputBuffer = "";
+
+    return new Promise((resolve) => {
+        inputResolver = resolve;
+    });
+}
+
+function finishInput() {
+    pushOutput("\n");
+    setInputMode(false);
+    inputMode = "single";
+    if (inputResolver) {
+        const resolve = inputResolver;
+        inputResolver = null;
+        resolve(inputBuffer);
+    }
+    inputBuffer = "";
+}
+
+function backspaceInput() {
+    if (!inputBuffer.length) return;
+    inputBuffer = inputBuffer.slice(0, -1);
+    outputEl.textContent = outputEl.textContent.slice(0, -1);
+}
+
+function appendInputChar(char) {
+    inputBuffer += char;
+    pushOutput(char);
+}
+
+function echoCInput(text) {
+    if (!text) return;
+    pushOutput(text);
+    cLocalInputChars += text.length;
+}
+
+function eraseCLocalChar() {
+    if (cLocalInputChars <= 0) return;
+    outputEl.textContent = outputEl.textContent.slice(0, -1);
+    cLocalInputChars -= 1;
+}
+
+async function sendCInput(data) {
+    if (!cSessionId) return;
+
+    const response = await fetch("/run/c/input", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: cSessionId, data })
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to send input");
+    }
+}
+
+function queueCInput(data) {
+    cInputChain = cInputChain.then(() => sendCInput(data)).catch(() => {});
+    return cInputChain;
+}
+
+async function pollCOutput(runId) {
+    if (!cSessionId || cPollInFlight) return;
+    cPollInFlight = true;
+    const currentGeneration = cPollGeneration;
+
+    try {
+        const response = await fetch(`/run/c/output?session_id=${encodeURIComponent(cSessionId)}&cursor=${cCursor}`);
+        if (!response.ok) {
+            throw new Error("Session closed");
+        }
+
+        const data = await response.json();
+        ensureRunActive(runId);
+        if (currentGeneration !== cPollGeneration) return;
+
+        pushOutput(data.output || "");
+        cCursor = data.cursor ?? cCursor;
+        cLocalInputChars = 0;
+
+        if (data.done) {
+            stopCPolling();
+            if (data.exit_code === 0) {
+                setRunStatus("Done");
+            } else {
+                setRunStatus(`Exited with code ${data.exit_code}`);
+            }
+            settleCRun();
+            return;
+        }
+    } catch (error) {
+        if (error?.name === "AbortError" || error?.message === RUN_RESTARTED) {
+            return;
+        }
+        stopCPolling();
+        settleCRun(error);
+        return;
+    } finally {
+        cPollInFlight = false;
+        if (cSessionId && currentGeneration === cPollGeneration) {
+            cPollTimer = setTimeout(() => pollCOutput(runId), 90);
+        }
+    }
+}
+
+function builtinRead(x) {
+    if (!Sk.builtinFiles || !Sk.builtinFiles.files[x]) {
+        throw new Error(`File not found: '${x}'`);
+    }
+    return Sk.builtinFiles.files[x];
+}
+
+outputEl.addEventListener("keydown", (event) => {
+    if (hasCSession()) {
+        if (event.ctrlKey && event.key.toLowerCase() === "c") {
+            event.preventDefault();
+            queueCInput("\u0003");
+            return;
+        }
+
+        if (event.key === "Enter") {
+            event.preventDefault();
+            echoCInput("\n");
+            queueCInput("\n");
+            cLocalInputChars = 0;
+            return;
+        }
+
+        if (event.key === "Backspace") {
+            event.preventDefault();
+            eraseCLocalChar();
+            queueCInput("\x7f");
+            return;
+        }
+
+        if (event.key === "Tab") {
+            event.preventDefault();
+            queueCInput("\t");
+            return;
+        }
+
+        if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            event.preventDefault();
+            echoCInput(event.key);
+            queueCInput(event.key);
+            return;
+        }
+
+        event.preventDefault();
+        return;
+    }
+
+    if (!awaitingInput) {
+        event.preventDefault();
+        return;
+    }
+
+    if (inputMode === "multi" && event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        appendInputChar("\n");
+        return;
+    }
+
+    if (inputMode === "multi" && event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        finishInput();
+        return;
+    }
+
+    if (event.key === "Enter") {
+        event.preventDefault();
+        finishInput();
+        return;
+    }
+
+    if (event.key === "Backspace") {
+        event.preventDefault();
+        backspaceInput();
+        return;
+    }
+
+    if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        appendInputChar(event.key);
+        return;
+    }
+
+    event.preventDefault();
+});
+
+outputEl.addEventListener("paste", (event) => {
+    if (hasCSession()) {
+        event.preventDefault();
+        const pasted = event.clipboardData?.getData("text") || "";
+        if (pasted) {
+            echoCInput(pasted);
+            queueCInput(pasted);
+        }
+        return;
+    }
+
+    if (!awaitingInput) {
+        event.preventDefault();
+        return;
+    }
+
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData("text") || "";
+    if (inputMode === "multi") {
+        for (const ch of pasted.replace(/\r/g, "")) {
+            appendInputChar(ch);
+        }
+        return;
+    }
+
+    for (const ch of pasted.replace(/\r/g, "")) {
+        if (ch === "\n") {
+            finishInput();
+            break;
+        }
+        appendInputChar(ch);
+    }
+});
+
+async function runPythonInBrowser(code, runId) {
+    Sk.configure({
+        output: (text) => {
+            ensureRunActive(runId);
+            pushOutput(text);
+        },
+        read: builtinRead,
+        inputfun: (promptText) => startInput(promptText, runId),
+        inputfunTakesPrompt: true,
+        __future__: Sk.python3,
+    });
+
+    await Sk.misceval.asyncToPromise(() =>
+        Sk.importMainWithBody("<stdin>", false, code, true),
+    );
+}
+
+async function runCompiledLanguage(code, language, runId) {
+    if (language !== "c") {
+        throw new Error(`Unsupported language: ${language}`);
+    }
+
+    const controller = new AbortController();
+    currentFetchController = controller;
+
+    const response = await fetch("/run/c/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+        signal: controller.signal
+    });
+
+    ensureRunActive(runId);
+    const result = await response.json();
+    ensureRunActive(runId);
+    currentFetchController = null;
+
+    if (result.error) {
+        throw new Error(result.error);
+    }
+
+    pushOutput(result.output || "");
+
+    if (!result.session_id) {
+        setRunStatus(result.status || "Done");
+        return;
+    }
+
+    cSessionId = result.session_id;
+    cCursor = 0;
+    cLocalInputChars = 0;
+    outputEl.focus();
+    setRunStatus("Running (waiting for input...)");
+    setTerminalCursor(true);
+    cPollGeneration += 1;
+    pollCOutput(runId);
+
+    await new Promise((resolve, reject) => {
+        cRunResolve = resolve;
+        cRunReject = reject;
+    });
+}
+
+// Handle input submission
+// Run code
+async function runCode() {
+    if (!window.editor) return;
+    const code = window.editor.getValue();
+
+    if (!code.trim()) {
+        outputEl.textContent = '';
+        setRunStatus("");
+        return;
+    }
+
+    if (runInProgress || awaitingInput || currentFetchController) {
+        cancelCurrentRun();
+    }
+
+    const runId = ++activeRunId;
+    runInProgress = true;
+    outputEl.textContent = '';
+    setRunStatus("Running...");
+
+    try {
+        if (languageSelect.value === "python") {
+            await runPythonInBrowser(code, runId);
+            if (runId !== activeRunId) return;
+            setRunStatus("Done");
+        } else {
+            await runCompiledLanguage(code, languageSelect.value, runId);
+            if (runId !== activeRunId) return;
+        }
+    } catch (error) {
+        if (error?.name === "AbortError" || error?.message === RUN_RESTARTED) return;
+        if (runId !== activeRunId) return;
+        pushOutput(`\nTraceback/Error:\n${error.toString()}\n`);
+        setRunStatus("Error");
+    } finally {
+        if (runId !== activeRunId) return;
+        runInProgress = false;
+        setInputMode(false);
+        inputResolver = null;
+        inputBuffer = "";
+        currentFetchController = null;
+    }
+}
+
+// Splitter for resizing panels
+const splitter = document.getElementById("splitter");
+const editorPanel = document.getElementById("editorPanel");
+const outputPanel = document.getElementById("outputPanel");
+
+let dragging = false;
+
+splitter.addEventListener("mousedown", () => {
+    dragging = true;
+    document.body.classList.add("dragging");
+});
+
+document.addEventListener("mouseup", () => {
+    dragging = false;
+    document.body.classList.remove("dragging");
+});
+
+document.addEventListener("mousemove", e => {
+    if (!dragging) return;
+
+    const rect = rightColumn.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const minEditor = 200;
+    const minOutput = 120;
+    const maxEditor = rect.height - minOutput - splitter.offsetHeight;
+
+    if (y < minEditor || y > maxEditor) return;
+
+    editorPanel.style.flex = "none";
+    outputPanel.style.flex = "none";
+    editorPanel.style.height = y + "px";
+    outputPanel.style.height = rect.height - y - splitter.offsetHeight + "px";
+
+    if (window.editor) window.editor.layout();
+});
+
+// Timer functionality
+const timerElement = document.getElementById("timer");
+{% if time_limit %}
+    let totalSeconds = {{ time_limit }};
+{% else %}
+    let totalSeconds = 30 * 60;
+{% endif %}
+
+let timerInterval;
+
+function updateTimer() {
+    if (totalSeconds <= 0) {
+        timerElement.textContent = "00:00";
+        timerElement.className = "timer danger";
+        
+        clearInterval(timerInterval);
+        
+        if (confirm("Time's up! Your code will be submitted automatically.")) {
+            document.getElementById("codeForm").submit();
+        }
+        return;
+    }
+    
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    timerElement.textContent = 
+        String(minutes).padStart(2, "0") + ":" + 
+        String(seconds).padStart(2, "0");
+    
+    if (totalSeconds <= 60) {
+        timerElement.className = "timer danger";
+    } else if (totalSeconds <= 300) {
+        timerElement.className = "timer warning";
+    } else {
+        timerElement.className = "timer";
+    }
+    
+    totalSeconds--;
+}
+
+updateTimer();
+timerInterval = setInterval(updateTimer, 1000);
+
+// Form submission
+document.getElementById("codeForm").addEventListener("submit", function() {
+    document.getElementById("codeInput").value = window.editor ? window.editor.getValue() : "";
+    document.getElementById("languageInput").value = languageSelect.value;
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+Enter or Cmd+Enter to submit
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById("codeForm").submit();
+    }
+    // Ctrl+R or Cmd+R to run
+    else if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        runCode();
+    }
+    // Ctrl+Shift+Space to format code
+    else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === ' ') {
+        e.preventDefault();
+        if (window.editor) {
+            window.editor.getAction('editor.action.formatDocument').run();
+        }
+    }
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    languageInput.value = 'python';
+    currentLang.textContent = 'Python';
+    if (window.editor) window.editor.setValue('');
+});
+</script>
+
+</body>
+</html>

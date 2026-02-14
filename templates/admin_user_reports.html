@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Reports - Admin</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #6b7280;
+            --text: #111827;
+            --muted: #6b7280;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 1px solid #000;
+        }
+
+        .user-info {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .user-info a {
+            color: #9ca3af;
+            text-decoration: none;
+            margin-left: 8px;
+        }
+
+        .user-info a:hover {
+            color: white;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .container {
+            background: var(--panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb .separator {
+            color: var(--muted);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin: 0 0 8px 0;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 4px 0;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .content {
+            padding: 0;
+        }
+
+        .table-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .table-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .search-bar {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            background: white;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        thead {
+            background: #f9fafb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+            cursor: pointer;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .user-id {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .progress-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .progress-good {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .progress-average {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .progress-poor {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .score-cell {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .score-high {
+            color: var(--success);
+        }
+
+        .score-medium {
+            color: var(--warning);
+        }
+
+        .score-low {
+            color: var(--danger);
+        }
+
+        .action-cell {
+            text-align: right;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .table-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            background: #f9fafb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-info {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .page {
+                padding: 16px;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            
+            td, th {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>Admin Panel - User Reports</div>
+    <div class="user-info">
+        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/">View Exam</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="container">
+        <div class="content-header">
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <span class="separator">/</span>
+                <span>User Reports</span>
+            </div>
+            <h1>User Performance Reports</h1>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-value">{{ users|length }}</div>
+                <div class="stat-change">Registered users</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Active Users</h3>
+                <div class="stat-value">
+                    {{ users|selectattr('total_submissions', 'gt', 0)|list|length }}
+                </div>
+                <div class="stat-change">Made submissions</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Avg. Success Rate</h3>
+                <div class="stat-value">
+                    {% set total_sr = namespace(value=0) %}
+                    {% for u in users if u.total_submissions > 0 %}
+                        {% set total_sr.value = total_sr.value + u.success_rate %}
+                    {% endfor %}
+                    {% set avg_sr = (total_sr.value / (users|selectattr('total_submissions', 'gt', 0)|list|length)) if (users|selectattr('total_submissions', 'gt', 0)|list|length) > 0 else 0 %}
+                    {{ avg_sr|int }}%
+                </div>
+                <div class="stat-change">Across all users</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Submissions</h3>
+                <div class="stat-value">
+                    {% set total_subs = namespace(value=0) %}
+                    {% for u in users %}
+                        {% set total_subs.value = total_subs.value + u.total_submissions %}
+                    {% endfor %}
+                    {{ total_subs.value }}
+                </div>
+                <div class="stat-change">All attempts</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="search-bar">
+                <div class="search-container">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                    <input type="text" class="search-input" placeholder="Search users by name..." onkeyup="filterTable()" id="searchInput">
+                </div>
+            </div>
+
+            <div class="table-container">
+                {% if users %}
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th width="50">#</th>
+                            <th>User</th>
+                            <th width="120">Submissions</th>
+                            <th width="120">Success Rate</th>
+                            <th width="120">Avg. Score</th>
+                            <th width="100">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr onclick="window.location.href='/admin/user_reports/{{ u.id }}'" style="cursor: pointer;">
+                            <td>
+                                <div style="font-size: 12px; color: var(--muted);">#{{ loop.index }}</div>
+                            </td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">
+                                        {{ u.username[0]|upper }}
+                                    </div>
+                                    <div class="user-details">
+                                        <div class="user-name">{{ u.username }}</div>
+                                        <div class="user-id">ID: {{ u.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ u.total_submissions }}</strong> total
+                                    <div style="font-size: 12px; color: var(--muted);">
+                                        {{ u.passed }} passed
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if u.total_submissions > 0 %}
+                                <span class="progress-badge 
+                                    {% if u.success_rate >= 70 %}progress-good
+                                    {% elif u.success_rate >= 40 %}progress-average
+                                    {% else %}progress-poor
+                                    {% endif %}">
+                                    {{ u.success_rate }}%
+                                </span>
+                                {% else %}
+                                <span style="color: var(--muted); font-size: 13px;">No submissions</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.total_submissions > 0 %}
+                                <div class="score-cell 
+                                    {% if u.avg_score >= 80 %}score-high
+                                    {% elif u.avg_score >= 50 %}score-medium
+                                    {% else %}score-low
+                                    {% endif %}">
+                                    {{ u.avg_score }}
+                                </div>
+                                {% else %}
+                                <span style="color: var(--muted);">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="action-cell">
+                                <a href="/admin/user_reports/{{ u.id }}" class="btn btn-primary" onclick="event.stopPropagation();">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">??</div>
+                    <h3>No Users Found</h3>
+                    <p>There are no users registered in the system yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="table-footer">
+            <div>
+                <span class="page-info">Showing {{ users|length }} user{{ 's' if users|length != 1 else '' }}</span>
+            </div>
+            <div>
+                <a href="/admin/dashboard" class="btn" style="background: white; color: var(--text); border: 1px solid var(--border);">
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('usersTable');
+    const tr = table.getElementsByTagName('tr');
+    
+    // Start from 1 to skip header row
+    for (let i = 1; i < tr.length; i++) {
+        const td = tr[i].getElementsByTagName('td');
+        let found = false;
+        
+        for (let j = 0; j < td.length; j++) {
+            if (td[j]) {
+                if (td[j].textContent.toLowerCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        tr[i].style.display = found ? '' : 'none';
+    }
+}
+
+// Make entire row clickable
+document.addEventListener('DOMContentLoaded', () => {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        row.addEventListener('click', (e) => {
+            // Don't navigate if clicking on action button
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+                return;
+            }
+            const link = row.querySelector('a[href]');
+            if (link) {
+                window.location.href = link.href;
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>

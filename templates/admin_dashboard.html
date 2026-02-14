@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #6b7280;
+            --text: #111827;
+            --muted: #6b7280;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 1px solid #000;
+        }
+
+        .user-info {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .user-info a {
+            color: #9ca3af;
+            text-decoration: none;
+            margin-left: 8px;
+        }
+
+        .user-info a:hover {
+            color: white;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .container {
+            background: var(--panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-header {
+            padding: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .dashboard-header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+        }
+
+        .dashboard-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 24px;
+            background: #f9fafb;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin: 0 0 8px 0;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 4px 0;
+        }
+
+        .stat-trend {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-trend.positive {
+            color: var(--success);
+        }
+
+        .stat-trend.negative {
+            color: var(--danger);
+        }
+
+        .dashboard-content {
+            padding: 32px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .action-card {
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .action-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-card p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .recent-questions {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #f9fafb;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .question-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .question-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+
+        .question-item:hover {
+            background: #f9fafb;
+        }
+
+        .question-item:last-child {
+            border-bottom: none;
+        }
+
+        .question-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .question-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            background: #f9fafb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .last-login {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .page {
+                padding: 16px;
+            }
+            
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .question-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            .question-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>Admin Dashboard</div>
+    <div class="user-info">
+        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
+        <a href="/">View Exam</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Welcome, {{ session.get('username', 'Admin') }}!</h1>
+            <p>Admin Dashboard - Manage your coding exam platform</p>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Total Questions</h3>
+                <div class="stat-value">{{ stats.total_questions }}</div>
+                <div class="stat-trend positive">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    +{{ stats.questions_this_month }} this month
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-value">{{ stats.total_users }}</div>
+                <div class="stat-trend positive">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    +{{ stats.new_users }} new
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Submissions</h3>
+                <div class="stat-value">{{ stats.total_submissions }}</div>
+                <div class="stat-trend positive">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    +{{ stats.submissions_today }} today
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="stat-value">{{ stats.success_rate }}%</div>
+                <div class="stat-trend {{ 'positive' if stats.success_rate >= 70 else 'negative' }}">
+                    {% if stats.success_rate >= 70 %}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    Good
+                    {% else %}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Needs attention
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="quick-actions">
+                    <a href="/admin" class="action-card">
+                        <h3><span class="icon">+</span> Create New Question</h3>
+                        <p>Add a new coding challenge with test cases and time limit</p>
+                    </a>
+
+                    <a href="/admin/questions" class="action-card">
+                        <h3><span class="icon">??</span> Manage Questions</h3>
+                        <p>View, edit, or delete existing questions and test cases</p>
+                    </a>
+
+                    <a href="/admin/users" class="action-card">
+                        <h3><span class="icon">??</span> Manage Users</h3>
+                        <p>View user accounts, track progress, and manage access</p>
+                    </a>
+
+                    <!-- CHANGED THIS CARD - Now points to /admin/user_reports -->
+                    <a href="/admin/user_reports" class="action-card">
+                        <h3><span class="icon">??</span> View User Reports</h3>
+                        <p>Detailed performance reports for individual users</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>Recent Questions</h2>
+                    <a href="/admin/questions" class="btn btn-secondary btn-sm">View All</a>
+                </div>
+                <div class="recent-questions">
+                    <div class="table-header">Recently Updated Questions</div>
+                    <div class="question-list">
+                        {% for q in recent_questions %}
+                        <div class="question-item">
+                            <div class="question-info">
+                                <h4>{{ q[1] }}</h4>
+                                <div class="question-meta">
+                                    <span>ID: #{{ q[0] }}</span>
+                                    <span>{{ q[2] }} test cases</span>
+                                    <span>{{ q[3] // 60 }} min time limit</span>
+                                </div>
+                            </div>
+                            <div class="question-actions">
+                                <a href="/admin/edit/{{ q[0] }}" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="/question/{{ q[0] }}" class="btn btn-secondary btn-sm" target="_blank">Preview</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not recent_questions %}
+                        <div class="question-item" style="text-align: center; color: var(--muted);">
+                            No questions yet. Create your first question!
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div>
+                System Status: <span style="color: var(--success); font-weight: 600;">? Operational</span>
+            </div>
+            <div class="last-login">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                    <path fill-rule="evenodd" d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                </svg>
+                Last updated: Just now
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-refresh stats every 60 seconds
+    setInterval(() => {
+        const lastLogin = document.querySelector('.last-login');
+        const now = new Date();
+        lastLogin.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                <path fill-rule="evenodd" d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+            </svg>
+            Last updated: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        `;
+    }, 60000);
+</script>
+
+</body>
+</html>

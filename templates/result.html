@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submission Result</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #f4f6f8;
+            color: #111827;
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .page {
+            display: flex;
+            justify-content: center;
+            padding: 32px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border: 1px solid #dcdfe3;
+            border-radius: 6px;
+            padding: 24px;
+        }
+
+        .verdict {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .PASS { color: #16a34a; }
+        .FAIL { color: #dc2626; }
+        .TIMEOUT { color: #f59e0b; }
+        .REJECTED { color: #dc2626; }
+
+        .summary {
+            margin-bottom: 24px;
+            color: #374151;
+            font-size: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f9fafb;
+            text-align: left;
+        }
+
+        .pass { color: #16a34a; font-weight: 600; }
+        .fail { color: #dc2626; font-weight: 600; }
+
+        pre {
+            background: #020617;
+            color: #e5e7eb;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 0;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        .actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        a.button {
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        a.retry {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">CodeArenaX</div>
+
+<div class="page">
+<div class="container">
+
+    <div class="verdict {{ verdict }}">{{ verdict }}</div>
+
+    <div class="summary">
+        Passed {{ passed }} out of {{ total }} test cases
+    </div>
+
+    {% if results %}
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Status</th>
+            <th>Input</th>
+            <th>Expected Output</th>
+            <th>Your Output</th>
+        </tr>
+
+        {% for r in results %}
+        <tr>
+            <td>{{ r.id }}</td>
+            <td class="{{ 'pass' if r.status == 'PASS' else 'fail' }}">
+                {{ r.status }}
+            </td>
+            <td><pre>{{ r.input }}</pre></td>
+            <td><pre>{{ r.expected }}</pre></td>
+            <td><pre>{{ r.actual }}</pre></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+    <div class="actions">
+        {% if verdict != "PASS" %}
+            <a href="/question/{{ question_id }}" class="button retry">Retry</a>
+        {% endif %}
+        <a href="/" class="button">Back to Questions</a>
+    </div>
+
+</div>
+</div>
+
+</body>
+</html>

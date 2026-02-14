@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports - Admin</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #6b7280;
+            --text: #111827;
+            --muted: #6b7280;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 1px solid #000;
+        }
+
+        .user-info {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .user-info a {
+            color: #9ca3af;
+            text-decoration: none;
+            margin-left: 8px;
+        }
+
+        .user-info a:hover {
+            color: white;
+        }
+
+        .page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .container {
+            background: var(--panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb .separator {
+            color: var(--muted);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .filters {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin: 0 0 8px 0;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 4px 0;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        .content {
+            padding: 0;
+        }
+
+        .table-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .table-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .export-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .export-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        thead {
+            background: #f9fafb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .question-title {
+            font-weight: 600;
+            color: var(--text);
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .verdict-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .verdict-pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .verdict-fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .verdict-timeout {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .verdict-rejected {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .score-cell {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .score-high {
+            color: var(--success);
+        }
+
+        .score-medium {
+            color: var(--warning);
+        }
+
+        .score-low {
+            color: var(--danger);
+        }
+
+        .time-cell {
+            font-size: 13px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            background: white;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f9fafb;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .page {
+                padding: 16px;
+            }
+            
+            .content-header {
+                padding: 20px;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            
+            td, th {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- UPDATED HEADER - Added link to user reports -->
+<div class="header">
+    <div>Admin Panel - Reports</div>
+    <div class="user-info">
+        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/user_reports">User Reports</a> <!-- ADDED THIS LINE -->
+        <a href="/">View Exam</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="container">
+        <div class="content-header">
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <span class="separator">/</span>
+                <span>Reports</span>
+            </div>
+            <h1>Submission Reports</h1>
+            <div class="filters">
+                <div class="filter-group">
+                    <div class="filter-label">Filter by User</div>
+                    <select id="userFilter" onchange="filterTable()">
+                        <option value="">All Users</option>
+                        {% for user in unique_users %}
+                        <option value="{{ user }}">{{ user }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <div class="filter-label">Filter by Question</div>
+                    <select id="questionFilter" onchange="filterTable()">
+                        <option value="">All Questions</option>
+                        {% for question in unique_questions %}
+                        <option value="{{ question }}">{{ question }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <div class="filter-label">Filter by Verdict</div>
+                    <select id="verdictFilter" onchange="filterTable()">
+                        <option value="">All Verdicts</option>
+                        <option value="PASS">Pass</option>
+                        <option value="FAIL">Fail</option>
+                        <option value="TIMEOUT">Timeout</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <div class="filter-label">Date Range</div>
+                    <input type="date" id="dateFilter" onchange="filterTable()">
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>Total Submissions</h3>
+                <div class="stat-value">{{ submissions|length }}</div>
+                <div class="stat-change positive">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    {{ (submissions|length / 20 * 100)|int if submissions|length > 0 else 0 }}% of total
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="stat-value">{{ success_rate }}%</div>
+                <div class="stat-change {{ 'positive' if success_rate >= 70 else 'negative' }}">
+                    {% if success_rate >= 70 %}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    Good
+                    {% else %}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Needs improvement
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Avg. Score</h3>
+                <div class="stat-value">{{ avg_score }}</div>
+                <div class="stat-change {{ 'positive' if avg_score >= 70 else 'negative' }}">
+                    {% if avg_score >= 70 %}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    Above average
+                    {% else %}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Below average
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Active Users</h3>
+                <div class="stat-value">{{ unique_users|length }}</div>
+                <div class="stat-change positive">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>
+                    </svg>
+                    {{ (unique_users|length / total_users * 100)|int if total_users > 0 else 0 }}% active
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="table-header">
+                <h2>Recent Submissions</h2>
+                <button class="export-btn" onclick="exportToCSV()">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Export CSV
+                </button>
+            </div>
+
+            {% if submissions %}
+            <div class="table-container">
+                <table id="reportsTable">
+                    <thead>
+                        <tr>
+                            <th width="80">ID</th>
+                            <th>User</th>
+                            <th>Question</th>
+                            <th width="120">Verdict</th>
+                            <th width="100">Score</th>
+                            <th width="180">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                        <tr class="submission-row">
+                            <td>
+                                <div style="font-size: 12px; color: var(--muted);">#{{ loop.index }}</div>
+                            </td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">
+                                        {{ sub[0][0]|upper }}
+                                    </div>
+                                    <div class="user-name">{{ sub[0] }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="question-title" title="{{ sub[1] }}">{{ sub[1] }}</div>
+                            </td>
+                            <td>
+                                {% if sub[2] == 'PASS' %}
+                                <span class="verdict-badge verdict-pass">
+                                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                                    </svg>
+                                    PASS
+                                </span>
+                                {% elif sub[2] == 'FAIL' %}
+                                <span class="verdict-badge verdict-fail">
+                                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                    </svg>
+                                    FAIL
+                                </span>
+                                {% elif sub[2] == 'TIMEOUT' %}
+                                <span class="verdict-badge verdict-timeout">
+                                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/>
+                                        <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/>
+                                        <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
+                                    </svg>
+                                    TIMEOUT
+                                </span>
+                                {% else %}
+                                <span class="verdict-badge verdict-rejected">
+                                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                    </svg>
+                                    {{ sub[2] }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="score-cell 
+                                    {% if sub[3] >= 80 %}score-high
+                                    {% elif sub[3] >= 50 %}score-medium
+                                    {% else %}score-low
+                                    {% endif %}">
+                                    {{ sub[3] }}%
+                                </div>
+                            </td>
+                            <td>
+                                <div class="time-cell">{{ sub[4] }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <button class="page-btn" id="prevPage" onclick="changePage(-1)" disabled>Previous</button>
+                <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                <button class="page-btn" id="nextPage" onclick="changePage(1)" disabled>Next</button>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">??</div>
+                <h3>No Submission Data</h3>
+                <p>No submissions have been made yet. Check back later.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const rowsPerPage = 10;
+let filteredRows = [];
+
+function filterTable() {
+    const userFilter = document.getElementById('userFilter').value.toLowerCase();
+    const questionFilter = document.getElementById('questionFilter').value.toLowerCase();
+    const verdictFilter = document.getElementById('verdictFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    const rows = document.querySelectorAll('.submission-row');
+    filteredRows = [];
+    
+    rows.forEach(row => {
+        const user = row.cells[1].textContent.toLowerCase();
+        const question = row.cells[2].textContent.toLowerCase();
+        const verdict = row.cells[3].textContent;
+        const time = row.cells[5].textContent;
+        
+        let showRow = true;
+        
+        if (userFilter && !user.includes(userFilter)) showRow = false;
+        if (questionFilter && !question.includes(questionFilter)) showRow = false;
+        if (verdictFilter && verdict !== verdictFilter) showRow = false;
+        if (dateFilter && time && !time.includes(dateFilter)) showRow = false;
+        
+        row.style.display = showRow ? '' : 'none';
+        if (showRow) filteredRows.push(row);
+    });
+    
+    currentPage = 1;
+    updatePagination();
+    showPage(currentPage);
+}
+
+function showPage(page) {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    
+    // Hide all rows first
+    document.querySelectorAll('.submission-row').forEach(row => {
+        row.style.display = 'none';
+    });
+    
+    // Show rows for current page
+    for (let i = start; i < end && i < filteredRows.length; i++) {
+        if (filteredRows[i]) {
+            filteredRows[i].style.display = '';
+        }
+    }
+    
+    // Update page info
+    document.getElementById('pageInfo').textContent = 
+        `Page ${page} of ${Math.ceil(filteredRows.length / rowsPerPage)}`;
+    
+    // Update button states
+    document.getElementById('prevPage').disabled = page === 1;
+    document.getElementById('nextPage').disabled = page === Math.ceil(filteredRows.length / rowsPerPage);
+}
+
+function changePage(direction) {
+    const newPage = currentPage + direction;
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        showPage(currentPage);
+    }
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    document.getElementById('pageInfo').textContent = 
+        `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
+}
+
+function exportToCSV() {
+    let csv = 'User,Question,Verdict,Score,Time\n';
+    
+    filteredRows.forEach(row => {
+        const cells = row.cells;
+        const user = cells[1].textContent.replace(',', '');
+        const question = cells[2].textContent.replace(',', '');
+        const verdict = cells[3].textContent.replace(',', '');
+        const score = cells[4].textContent.replace(',', '');
+        const time = cells[5].textContent.replace(',', '');
+        
+        csv += `${user},${question},${verdict},${score},${time}\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'submissions_report.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    alert('CSV file downloaded successfully!');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Get all submission rows
+    const rows = document.querySelectorAll('.submission-row');
+    filteredRows = Array.from(rows);
+    
+    // Initialize pagination
+    updatePagination();
+    showPage(currentPage);
+    
+    // Add sorting functionality
+    document.querySelectorAll('th').forEach((th, index) => {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', () => sortTable(index));
+    });
+});
+
+let sortDirection = 1;
+function sortTable(columnIndex) {
+    const tbody = document.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('.submission-row'));
+    
+    rows.sort((a, b) => {
+        const aValue = a.cells[columnIndex].textContent;
+        const bValue = b.cells[columnIndex].textContent;
+        
+        if (columnIndex === 4) { // Score column (numeric with %)
+            const aNum = parseInt(aValue.replace('%', ''));
+            const bNum = parseInt(bValue.replace('%', ''));
+            return sortDirection * (aNum - bNum);
+        } else {
+            return sortDirection * aValue.localeCompare(bValue);
+        }
+    });
+    
+    sortDirection *= -1;
+    
+    // Reorder rows
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Re-filter and re-paginate
+    filterTable();
+}
+</script>
+
+</body>
+</html>

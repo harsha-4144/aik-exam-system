@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Question - Admin Panel</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #6b7280;
+            --text: #111827;
+            --text-light: #6b7280;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --edit: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .container {
+            background: var(--panel);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .form-content {
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section {
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .form-section h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .required::after {
+            content: " *";
+            color: var(--danger);
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+            color: var(--text);
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* Test Cases */
+        .test-cases-section {
+            grid-column: 1 / -1;
+        }
+
+        .test-case {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .test-case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .test-case-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .remove-test-case {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .test-case-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .example-checkbox {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .example-checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-add {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .btn-add:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Time Limit Options */
+        .time-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .time-option {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .time-option:hover,
+        .time-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            color: #92400e;
+        }
+
+        .warning-banner svg {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>Admin Panel</div>
+    <div style="font-size: 14px; color: #9ca3af;">
+        <a href="/admin/dashboard" style="color: #9ca3af; text-decoration: none;">Dashboard</a>
+        | <a href="/" style="color: #9ca3af; text-decoration: none;">View Exam</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="container">
+        <div class="content-header">
+            <div class="breadcrumb">
+                <a href="/admin/questions"> Manage Questions</a>
+            </div>
+            <h1>Edit Question #{{ qid }}</h1>
+        </div>
+
+        <div class="warning-banner">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <div>Editing test cases will affect all existing submissions. Use with caution.</div>
+        </div>
+
+        <div class="form-content">
+            <form method="POST" id="editForm">
+                <div class="form-grid">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h2>Basic Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="title" class="required">Question Title</label>
+                            <input type="text" id="title" name="title" required 
+                                   value="{{ question[0] }}"
+                                   placeholder="e.g., Sum of Two Numbers">
+                            <div class="help-text">Short descriptive title</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="required">Description</label>
+                            <textarea id="description" name="description" required 
+                                      placeholder="Problem statement, input/output format, constraints...">{{ question[1] }}</textarea>
+                            <div class="help-text">Markdown supported</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="time_limit" class="required">Time Limit (minutes)</label>
+                            <input type="number" id="time_limit" name="time_limit" required 
+                                   value="{{ (question[2] // 60) if question[2] else 30 }}" 
+                                   min="1" max="180">
+                            <div class="help-text">Time allowed for this question</div>
+                        </div>
+
+                        <div class="help-text">Quick select:</div>
+                        <div class="time-options">
+                            <div class="time-option" data-minutes="5">5 min</div>
+                            <div class="time-option" data-minutes="15">15 min</div>
+                            <div class="time-option" data-minutes="30">30 min</div>
+                            <div class="time-option" data-minutes="45">45 min</div>
+                            <div class="time-option" data-minutes="60">60 min</div>
+                            <div class="time-option" data-minutes="90">90 min</div>
+                        </div>
+                    </div>
+
+                    <!-- Question Stats -->
+                    <div class="form-section">
+                        <h2>Question Stats</h2>
+                        
+                        <div class="form-group">
+                            <label>Question ID</label>
+                            <input type="text" value="#{{ qid }}" readonly style="background: #f3f4f6;">
+                            <div class="help-text">Unique identifier</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Test Cases</label>
+                            <input type="text" value="{{ test_cases|length }} test cases" readonly style="background: #f3f4f6;">
+                            <div class="help-text">Total test cases for this question</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Created</label>
+                            <input type="text" value="Edit to update" readonly style="background: #f3f4f6;">
+                            <div class="help-text">Save changes to update</div>
+                        </div>
+                    </div>
+
+                    <!-- Test Cases -->
+                    <div class="form-section test-cases-section">
+                        <h2>Test Cases ({{ test_cases|length }})</h2>
+                        
+                        <div id="testCasesContainer">
+                            {% for tc in test_cases %}
+                            <div class="test-case" id="testCase-{{ loop.index }}">
+                                <div class="test-case-header">
+                                    <div class="test-case-title">Test Case {{ loop.index }}</div>
+                                    <button type="button" class="remove-test-case" onclick="removeTestCase({{ loop.index }})">
+                                        Remove
+                                    </button>
+                                </div>
+                                <div class="test-case-fields">
+                                    <div>
+                                        <label class="required">Input</label>
+                                        <textarea name="input[]" required>{{ tc[0] }}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="required">Expected Output</label>
+                                        <textarea name="output[]" required>{{ tc[1] }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="example-checkbox">
+                                    <label>
+                                        <input type="checkbox" name="is_example[]" value="{{ loop.index0 }}" {% if tc[2] == 1 %}checked{% endif %}>
+                                        Show as example to users
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="button" class="btn btn-add" onclick="addTestCase()">
+                            + Add Test Case
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/admin/questions" class="btn btn-secondary">Cancel</a>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+                        <button type="submit" class="btn btn-success">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let testCaseCount = {{ test_cases|length }};
+
+    function addTestCase(input = "", output = "", isExample = false) {
+        testCaseCount++;
+        const container = document.getElementById('testCasesContainer');
+        
+        const testCaseDiv = document.createElement('div');
+        testCaseDiv.className = 'test-case';
+        testCaseDiv.id = `testCase-${testCaseCount}`;
+        
+        testCaseDiv.innerHTML = `
+            <div class="test-case-header">
+                <div class="test-case-title">Test Case ${testCaseCount}</div>
+                <button type="button" class="remove-test-case" onclick="removeTestCase(${testCaseCount})">
+                    Remove
+                </button>
+            </div>
+            <div class="test-case-fields">
+                <div>
+                    <label class="required">Input</label>
+                    <textarea name="input[]" required 
+                              placeholder="Test input">${input}</textarea>
+                </div>
+                <div>
+                    <label class="required">Expected Output</label>
+                    <textarea name="output[]" required 
+                              placeholder="Expected output">${output}</textarea>
+                </div>
+            </div>
+            <div class="example-checkbox">
+                <label>
+                    <input type="checkbox" name="is_example[]" value="${testCaseCount - 1}" ${isExample ? 'checked' : ''}>
+                    Show as example to users
+                </label>
+            </div>
+        `;
+        
+        container.appendChild(testCaseDiv);
+    }
+
+    function removeTestCase(id) {
+        const element = document.getElementById(`testCase-${id}`);
+        if (element) {
+            element.remove();
+            
+            // Renumber remaining test cases
+            const testCases = document.querySelectorAll('.test-case');
+            testCases.forEach((tc, index) => {
+                const title = tc.querySelector('.test-case-title');
+                if (title) {
+                    title.textContent = `Test Case ${index + 1}`;
+                }
+                
+                // Update the example checkbox value
+                const checkbox = tc.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.value = index;
+                }
+            });
+            
+            testCaseCount = testCases.length;
+        }
+    }
+
+    function resetForm() {
+        if (confirm('Are you sure you want to reset all changes? All unsaved edits will be lost.')) {
+            window.location.reload();
+        }
+    }
+
+    // Time limit quick select
+    document.querySelectorAll('.time-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const minutes = this.getAttribute('data-minutes');
+            document.getElementById('time_limit').value = minutes;
+            
+            // Update active state
+            document.querySelectorAll('.time-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
+    });
+
+    // Set active time option based on current value
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentTime = document.getElementById('time_limit').value;
+        document.querySelectorAll('.time-option').forEach(opt => {
+            if (opt.getAttribute('data-minutes') === currentTime) {
+                opt.classList.add('active');
+            }
+        });
+    });
+
+    // Form validation
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        const testCases = document.querySelectorAll('.test-case');
+        if (testCases.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one test case.');
+            return false;
+        }
+        
+        // Validate all required fields
+        const requiredFields = this.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.style.borderColor = 'var(--danger)';
+            } else {
+                field.style.borderColor = '';
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+        
+        return isValid;
+    });
+</script>
+
+</body>
+</html>
