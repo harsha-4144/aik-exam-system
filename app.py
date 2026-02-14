@@ -2,12 +2,15 @@ import os
 from flask import Flask, render_template, request, redirect, session, jsonify
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2.pool import SimpleConnectionPool
 import subprocess
 import resource
 import tempfile
 import threading
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
+from functools import wraps
 from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
 
@@ -17,23 +20,332 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "exam-secret-key-change-this")
 
 # ---------- DATABASE ----------
-def get_db():
-    """Get PostgreSQL database connection"""
+db_pool = None
+db_pool_lock = threading.Lock()
+
+schema_initialized = False
+schema_lock = threading.Lock()
+
+
+def init_db_pool():
+    global db_pool
+    if db_pool is not None:
+        return
+
+    with db_pool_lock:
+        if db_pool is not None:
+            return
+
+        try:
+            db_pool = SimpleConnectionPool(
+                int(os.getenv("DB_POOL_MINCONN", "1")),
+                int(os.getenv("DB_POOL_MAXCONN", "10")),
+                os.getenv("DATABASE_URL"),
+            )
+        except Exception as e:
+            print(f"DB pool init failed, falling back to direct connections: {e}")
+            db_pool = None
+
+
+def ensure_exam_schema():
+    global schema_initialized
+    if schema_initialized:
+        return
+
+    with schema_lock:
+        if schema_initialized:
+            return
+
+        conn = get_db(raw=True)
+        if not conn:
+            return
+
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS exam_sessions (
+                    id SERIAL PRIMARY KEY,
+                    session_name TEXT NOT NULL,
+                    start_time TIMESTAMP NOT NULL,
+                    end_time TIMESTAMP,
+                    duration_minutes INTEGER NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
+                ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS question_ids TEXT DEFAULT '';
+                ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT FALSE;
+                ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS paused_at TIMESTAMP;
+                ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS participant_limit INTEGER DEFAULT 0;
+                ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS auto_start_when_all_ready BOOLEAN DEFAULT FALSE;
+
+                CREATE TABLE IF NOT EXISTS exam_participants (
+                    id SERIAL PRIMARY KEY,
+                    session_id INTEGER NOT NULL REFERENCES exam_sessions(id) ON DELETE CASCADE,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    ready_status BOOLEAN DEFAULT FALSE,
+                    started_at TIMESTAMP,
+                    completed_at TIMESTAMP
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_exam_participants_session_user
+                    ON exam_participants(session_id, user_id);
+
+                CREATE TABLE IF NOT EXISTS exam_progress (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+                    status TEXT DEFAULT 'in_progress',
+                    score INTEGER DEFAULT 0,
+                    time_spent INTEGER DEFAULT 0
+                );
+                ALTER TABLE exam_progress ADD COLUMN IF NOT EXISTS session_id INTEGER REFERENCES exam_sessions(id) ON DELETE CASCADE;
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_exam_progress_session_user_question
+                    ON exam_progress(session_id, user_id, question_id);
+
+                CREATE TABLE IF NOT EXISTS exam_settings (
+                    setting_key TEXT PRIMARY KEY,
+                    setting_value TEXT NOT NULL
+                );
+
+                INSERT INTO exam_settings(setting_key, setting_value)
+                VALUES ('questions_hidden', '0')
+                ON CONFLICT (setting_key) DO NOTHING;
+                """
+            )
+            conn.commit()
+            schema_initialized = True
+        except Exception as e:
+            print(f"Schema initialization error: {e}")
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        finally:
+            close_db(conn)
+
+
+def close_db(conn):
+    if not conn:
+        return
     try:
-        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
-        return conn
+        if db_pool is not None:
+            db_pool.putconn(conn)
+        else:
+            close_db(conn)
+    except Exception:
+        pass
+
+def get_db(raw=False):
+    """Get PostgreSQL database connection"""
+    if raw:
+        try:
+            if db_pool is not None:
+                return db_pool.getconn()
+            return psycopg2.connect(os.getenv("DATABASE_URL"))
+        except Exception as e:
+            print(f"Database connection error: {e}")
+            return None
+    return get_db_safe()
+
+def get_db_safe():
+    init_db_pool()
+    ensure_exam_schema()
+    try:
+        if db_pool is not None:
+            return db_pool.getconn()
+        return psycopg2.connect(os.getenv("DATABASE_URL"))
     except Exception as e:
         print(f"Database connection error: {e}")
         return None
 
 def db():
-    return get_db()
+    return get_db_safe()
 
 def is_logged_in():
     return "user_id" in session
 
 def is_admin():
     return session.get("username") == "admin"
+
+# ---------- EXAM SESSION HELPERS ----------
+api_rate_limits = {}
+api_rate_lock = threading.Lock()
+
+
+def rate_limited(bucket_key, max_hits=30, window_seconds=60):
+    now = time.time()
+    with api_rate_lock:
+        hits = api_rate_limits.get(bucket_key, [])
+        hits = [ts for ts in hits if now - ts < window_seconds]
+        if len(hits) >= max_hits:
+            api_rate_limits[bucket_key] = hits
+            return True
+        hits.append(now)
+        api_rate_limits[bucket_key] = hits
+    return False
+
+
+def parse_question_ids(raw):
+    if not raw:
+        return []
+    parsed = []
+    for part in str(raw).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            parsed.append(int(part))
+        except ValueError:
+            continue
+    return parsed
+
+
+def serialize_question_ids(question_ids):
+    return ",".join(str(int(qid)) for qid in question_ids)
+
+
+def get_exam_setting(conn, key, default="0"):
+    cur = conn.cursor()
+    cur.execute("SELECT setting_value FROM exam_settings WHERE setting_key = %s", (key,))
+    row = cur.fetchone()
+    return row[0] if row else default
+
+
+def set_exam_setting(conn, key, value):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO exam_settings (setting_key, setting_value)
+        VALUES (%s, %s)
+        ON CONFLICT (setting_key)
+        DO UPDATE SET setting_value = EXCLUDED.setting_value
+        """,
+        (key, str(value)),
+    )
+
+
+def get_active_exam_session(conn):
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT *
+        FROM exam_sessions
+        WHERE is_active = TRUE
+        ORDER BY created_at DESC
+        LIMIT 1
+        """
+    )
+    return cur.fetchone()
+
+
+def has_exam_started(exam_session):
+    if not exam_session:
+        return False
+    now = datetime.utcnow()
+    return now >= exam_session["start_time"]
+
+
+def is_exam_paused(exam_session):
+    return bool(exam_session and exam_session.get("is_paused"))
+
+
+def get_total_participant_target(conn, exam_session):
+    if exam_session and exam_session.get("participant_limit", 0) and exam_session["participant_limit"] > 0:
+        return exam_session["participant_limit"]
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM users WHERE username <> 'admin'")
+    return cur.fetchone()[0]
+
+
+def ensure_participant(conn, session_id, user_id):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO exam_participants(session_id, user_id, ready_status)
+        VALUES (%s, %s, FALSE)
+        ON CONFLICT (session_id, user_id) DO NOTHING
+        """,
+        (session_id, user_id),
+    )
+
+
+def participant_counts(conn, session_id):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT
+            COALESCE(SUM(CASE WHEN ready_status THEN 1 ELSE 0 END), 0) AS ready_count,
+            COALESCE(SUM(CASE WHEN started_at IS NOT NULL AND completed_at IS NULL THEN 1 ELSE 0 END), 0) AS in_progress_count,
+            COALESCE(SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS completed_count
+        FROM exam_participants
+        WHERE session_id = %s
+        """,
+        (session_id,),
+    )
+    row = cur.fetchone()
+    return {
+        "ready_count": int(row[0] or 0),
+        "in_progress_count": int(row[1] or 0),
+        "completed_count": int(row[2] or 0),
+    }
+
+
+def resolve_exam_question_ids(conn, exam_session):
+    question_ids = parse_question_ids(exam_session.get("question_ids") if exam_session else "")
+    if question_ids:
+        return question_ids
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM questions ORDER BY id")
+    return [row[0] for row in cur.fetchall()]
+
+
+def get_completed_question_ids(conn, session_id, user_id):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT question_id
+        FROM exam_progress
+        WHERE session_id = %s AND user_id = %s AND status = 'completed'
+        """,
+        (session_id, user_id),
+    )
+    return {row[0] for row in cur.fetchall()}
+
+
+def current_question_for_user(conn, exam_session, user_id):
+    question_ids = resolve_exam_question_ids(conn, exam_session)
+    completed = get_completed_question_ids(conn, exam_session["id"], user_id)
+    for qid in question_ids:
+        if qid not in completed:
+            return qid
+    return None
+
+
+def should_use_exam_mode(conn):
+    return get_exam_setting(conn, "questions_hidden", "0") == "1"
+
+
+def get_exam_runtime(conn, user_id=None):
+    exam_hidden = should_use_exam_mode(conn)
+    active = get_active_exam_session(conn)
+    started = has_exam_started(active)
+    paused = is_exam_paused(active)
+
+    next_qid = None
+    exam_finished = False
+    if user_id and active and started and not paused:
+        next_qid = current_question_for_user(conn, active, user_id)
+        exam_finished = next_qid is None
+
+    return {
+        "hidden": exam_hidden,
+        "active": active,
+        "started": started,
+        "paused": paused,
+        "next_qid": next_qid,
+        "finished": exam_finished,
+    }
 
 # ---------- SECURITY ----------
 BLOCKED_KEYWORDS = [
@@ -365,7 +677,7 @@ def login():
         cur = conn.cursor()
         cur.execute("SELECT id, password FROM users WHERE username = %s", (username,))
         row = cur.fetchone()
-        conn.close()
+        close_db(conn)
         
         if not row:
             error = "Invalid username"
@@ -376,6 +688,25 @@ def login():
             else:
                 session["user_id"] = user_id
                 session["username"] = username
+                if username == "admin":
+                    return redirect("/admin/dashboard")
+
+                conn = db()
+                if not conn:
+                    return "Database connection error", 500
+                runtime = get_exam_runtime(conn, user_id=user_id)
+                if runtime["hidden"]:
+                    if runtime["active"]:
+                        ensure_participant(conn, runtime["active"]["id"], user_id)
+                        conn.commit()
+                    close_db(conn)
+                    if runtime["started"] and not runtime["paused"]:
+                        if runtime["finished"]:
+                            return redirect("/report")
+                        return redirect(f"/question/{runtime['next_qid']}")
+                    return redirect("/waiting-room")
+
+                close_db(conn)
                 return redirect("/")
     
     return render_template("login.html", error=error)
@@ -390,10 +721,25 @@ def logout():
 def questions():
     if "user_id" not in session:
         return redirect("/login")
+    if is_admin():
+        return redirect("/admin/dashboard")
     
     conn = db()
     if not conn:
         return "Database connection error", 500
+
+    runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    if runtime["hidden"]:
+        if runtime["active"]:
+            ensure_participant(conn, runtime["active"]["id"], session["user_id"])
+            conn.commit()
+        close_db(conn)
+
+        if runtime["started"] and not runtime["paused"]:
+            if runtime["finished"]:
+                return redirect("/report")
+            return redirect(f"/question/{runtime['next_qid']}")
+        return redirect("/waiting-room")
         
     cur = conn.cursor()
     cur.execute("""
@@ -408,7 +754,7 @@ def questions():
     """, (session["user_id"],))
     
     questions = cur.fetchall()
-    conn.close()
+    close_db(conn)
     
     return render_template(
         "questions.html",
@@ -421,10 +767,49 @@ def questions():
 def exam_page(qid):
     if not is_logged_in():
         return redirect("/login")
+    if is_admin():
+        return redirect("/admin/dashboard")
     
     conn = db()
     if not conn:
         return "Database connection error", 500
+
+    runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    if runtime["hidden"]:
+        if not runtime["active"] or not runtime["started"] or runtime["paused"]:
+            close_db(conn)
+            return redirect("/waiting-room")
+
+        ensure_participant(conn, runtime["active"]["id"], session["user_id"])
+        current_qid = current_question_for_user(conn, runtime["active"], session["user_id"])
+        if current_qid is None:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE exam_participants
+                SET completed_at = COALESCE(completed_at, NOW())
+                WHERE session_id = %s AND user_id = %s
+                """,
+                (runtime["active"]["id"], session["user_id"]),
+            )
+            conn.commit()
+            close_db(conn)
+            return redirect("/report")
+
+        if qid != current_qid:
+            close_db(conn)
+            return redirect(f"/question/{current_qid}")
+
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE exam_participants
+            SET started_at = COALESCE(started_at, NOW())
+            WHERE session_id = %s AND user_id = %s
+            """,
+            (runtime["active"]["id"], session["user_id"]),
+        )
+        conn.commit()
         
     cur = conn.cursor()
     cur.execute(
@@ -432,6 +817,9 @@ def exam_page(qid):
         (qid,)
     )
     q = cur.fetchone()
+    if not q:
+        close_db(conn)
+        return "Question not found", 404
     
     cur.execute("""
         SELECT input, expected_output
@@ -442,7 +830,7 @@ def exam_page(qid):
     """, (qid,))
     examples = cur.fetchall()
     
-    conn.close()
+    close_db(conn)
     
     # Persist per-question timer deadline in session so refresh does not reset it.
     configured_time_limit = int(q[2]) if q and q[2] else 30 * 60
@@ -467,6 +855,158 @@ def exam_page(qid):
         time_limit=remaining_seconds,
         time_limit_minutes=time_limit_minutes
     )
+
+
+@app.route("/waiting-room")
+def waiting_room():
+    if not is_logged_in():
+        return redirect("/login")
+    if is_admin():
+        return redirect("/admin/dashboard")
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    if not runtime["hidden"]:
+        close_db(conn)
+        return redirect("/")
+
+    if runtime["active"]:
+        ensure_participant(conn, runtime["active"]["id"], session["user_id"])
+        conn.commit()
+
+    if runtime["started"] and not runtime["paused"]:
+        if runtime["finished"]:
+            close_db(conn)
+            return redirect("/report")
+        next_qid = runtime["next_qid"]
+        close_db(conn)
+        return redirect(f"/question/{next_qid}")
+
+    counts = {"ready_count": 0, "in_progress_count": 0, "completed_count": 0}
+    total_target = 0
+    start_time = None
+    session_name = "Upcoming Exam"
+    paused = False
+    if runtime["active"]:
+        counts = participant_counts(conn, runtime["active"]["id"])
+        total_target = get_total_participant_target(conn, runtime["active"])
+        start_time = runtime["active"]["start_time"]
+        session_name = runtime["active"]["session_name"]
+        paused = runtime["paused"]
+
+    close_db(conn)
+    return render_template(
+        "waiting_room.html",
+        session_name=session_name,
+        start_time_iso=start_time.isoformat() if start_time else "",
+        ready_count=counts["ready_count"],
+        total_count=total_target,
+        paused=paused,
+    )
+
+
+@app.route("/exam-status")
+def exam_status():
+    if not is_logged_in():
+        return jsonify({"error": "Not logged in"}), 401
+
+    bucket = f"exam-status:{session.get('user_id', 0)}"
+    if rate_limited(bucket, max_hits=120, window_seconds=60):
+        return jsonify({"error": "Too many requests"}), 429
+
+    conn = db()
+    if not conn:
+        return jsonify({"error": "Database connection error"}), 500
+
+    runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    active = runtime["active"]
+    counts = {"ready_count": 0, "in_progress_count": 0, "completed_count": 0}
+    total_target = 0
+    start_time = None
+    end_time = None
+    session_name = ""
+    if active:
+        ensure_participant(conn, active["id"], session["user_id"])
+        counts = participant_counts(conn, active["id"])
+        total_target = get_total_participant_target(conn, active)
+        start_time = active["start_time"]
+        end_time = active.get("end_time")
+        session_name = active["session_name"]
+        conn.commit()
+
+    now = datetime.utcnow()
+    seconds_to_start = 0
+    if start_time and now < start_time:
+        seconds_to_start = int((start_time - now).total_seconds())
+
+    remaining_seconds = None
+    if active:
+        if start_time and now < start_time:
+            remaining_seconds = max(0, int((active.get("duration_minutes", 0) or 0) * 60))
+        elif end_time:
+            remaining_seconds = max(0, int((end_time - now).total_seconds()))
+        else:
+            remaining_seconds = max(0, int((active.get("duration_minutes", 0) or 0) * 60))
+
+    redirect_url = None
+    if runtime["hidden"] and runtime["started"] and not runtime["paused"]:
+        redirect_url = "/report" if runtime["finished"] else f"/question/{runtime['next_qid']}"
+
+    close_db(conn)
+    return jsonify(
+        {
+            "hidden": runtime["hidden"],
+            "has_session": bool(active),
+            "session_name": session_name,
+            "started": runtime["started"],
+            "paused": runtime["paused"],
+            "seconds_to_start": max(0, seconds_to_start),
+            "remaining_seconds": remaining_seconds,
+            "duration_minutes": int(active.get("duration_minutes", 0)) if active else 0,
+            "scheduled_start_iso": start_time.isoformat() if start_time else None,
+            "ready_count": counts["ready_count"],
+            "in_progress_count": counts["in_progress_count"],
+            "completed_count": counts["completed_count"],
+            "total_count": total_target,
+            "redirect_url": redirect_url,
+        }
+    )
+
+
+@app.route("/student-ready", methods=["POST"])
+def student_ready():
+    if not is_logged_in():
+        return jsonify({"error": "Not logged in"}), 401
+
+    bucket = f"student-ready:{session.get('user_id', 0)}"
+    if rate_limited(bucket, max_hits=20, window_seconds=60):
+        return jsonify({"error": "Too many requests"}), 429
+
+    conn = db()
+    if not conn:
+        return jsonify({"error": "Database connection error"}), 500
+
+    runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    if not runtime["hidden"] or not runtime["active"]:
+        close_db(conn)
+        return jsonify({"error": "No active exam session"}), 400
+
+    ensure_participant(conn, runtime["active"]["id"], session["user_id"])
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE exam_participants
+        SET ready_status = TRUE
+        WHERE session_id = %s AND user_id = %s
+        """,
+        (runtime["active"]["id"], session["user_id"]),
+    )
+    conn.commit()
+    close_db(conn)
+    return jsonify({"ok": True})
 
 @app.route("/run", methods=["POST"])
 def run_code():
@@ -625,73 +1165,116 @@ def submit():
             "result.html",
             verdict="REJECTED",
             error=f"Blocked keyword detected: {keyword}",
-            results=[],
+            example_results=[],
             passed=0,
             total=0,
             score=0,
+            hidden_passed=0,
+            hidden_total=0,
+            sequential_mode=False,
+            next_url="/",
+            auto_seconds=10,
             question_id=question_id
         )
     
-    # Load test cases (only non-example ones for grading)
+    # Load test cases
     conn = db()
     if not conn:
         return "Database connection error", 500
-        
+
+    runtime = get_exam_runtime(conn, user_id=user_id)
+    exam_mode = runtime["hidden"] and runtime["active"] and runtime["started"] and not runtime["paused"]
+    if exam_mode:
+        current_qid = current_question_for_user(conn, runtime["active"], user_id)
+        if current_qid != question_id:
+            close_db(conn)
+            return redirect("/waiting-room")
+
     cur = conn.cursor()
     cur.execute(
-        "SELECT input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 0",
+        "SELECT input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 1 ORDER BY id",
+        (question_id,),
+    )
+    example_tests = cur.fetchall()
+
+    cur.execute(
+        "SELECT input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 0 ORDER BY id",
         (question_id,)
     )
-    tests = cur.fetchall()
-    conn.close()
-    
-    results = []
-    passed_count = 0
-    total_tests = len(tests)
-    
-    # Execute against all test cases
-    for i, (inp, exp) in enumerate(tests, start=1):
+    hidden_tests = cur.fetchall()
+
+    example_results = []
+    for i, (inp, exp) in enumerate(example_tests, start=1):
         result = execute_code(code, language, inp)
-        
-        if result['success'] and result['output'].strip() == exp.strip():
-            status = "PASS"
-            passed_count += 1
-        else:
-            status = "FAIL"
-        
-        results.append({
-            "id": i,
-            "input": inp,
-            "expected": exp.strip(),
-            "actual": result['output'].strip() if result['success'] else result['output'],
-            "status": status,
-            "error": result['error']
-        })
-    
-    # Final verdict
-    verdict = "PASS" if passed_count == total_tests else "FAIL"
-    score = int((passed_count / total_tests) * 100) if total_tests else 0
-    
-    # Save submission
-    conn = db()
-    if not conn:
-        return "Database connection error", 500
-        
-    cur = conn.cursor()
+        status = "PASS" if result["success"] and result["output"].strip() == exp.strip() else "FAIL"
+        example_results.append(
+            {
+                "id": i,
+                "input": inp,
+                "expected": exp.strip(),
+                "actual": result["output"].strip() if result["success"] else result["output"],
+                "status": status,
+            }
+        )
+
+    hidden_passed = 0
+    hidden_total = len(hidden_tests)
+    for inp, exp in hidden_tests:
+        result = execute_code(code, language, inp)
+        if result["success"] and result["output"].strip() == exp.strip():
+            hidden_passed += 1
+
+    verdict = "PASS" if hidden_passed == hidden_total else "FAIL"
+    score = int((hidden_passed / hidden_total) * 100) if hidden_total else 0
+
     cur.execute(
         "INSERT INTO submissions (user_id, question_id, code, verdict, score) VALUES (%s, %s, %s, %s, %s)",
         (user_id, question_id, code, verdict, score)
     )
+
+    next_url = "/"
+    sequential_mode = bool(exam_mode)
+    if exam_mode:
+        ensure_participant(conn, runtime["active"]["id"], user_id)
+        cur.execute(
+            """
+            INSERT INTO exam_progress(session_id, user_id, question_id, status, score, time_spent)
+            VALUES (%s, %s, %s, 'completed', %s, 0)
+            ON CONFLICT (session_id, user_id, question_id)
+            DO UPDATE SET status = 'completed', score = EXCLUDED.score
+            """,
+            (runtime["active"]["id"], user_id, question_id, score),
+        )
+
+        next_qid = current_question_for_user(conn, runtime["active"], user_id)
+        if next_qid is None:
+            cur.execute(
+                """
+                UPDATE exam_participants
+                SET completed_at = NOW()
+                WHERE session_id = %s AND user_id = %s
+                """,
+                (runtime["active"]["id"], user_id),
+            )
+            next_url = "/report"
+        else:
+            next_url = f"/question/{next_qid}"
+
     conn.commit()
-    conn.close()
+    close_db(conn)
     
     return render_template(
         "result.html",
         verdict=verdict,
-        total=total_tests,
-        passed=passed_count,
+        total=hidden_total,
+        passed=hidden_passed,
         score=score,
-        results=results,
+        hidden_total=hidden_total,
+        hidden_passed=hidden_passed,
+        example_results=example_results,
+        sequential_mode=sequential_mode,
+        next_url=next_url,
+        auto_seconds=10,
         question_id=question_id
     )
 
@@ -733,8 +1316,8 @@ def admin_dashboard():
     cur.execute("SELECT COUNT(*) FROM submissions WHERE verdict = 'PASS'")
     passed = cur.fetchone()[0]
     success_rate = int((passed / total_submissions * 100)) if total_submissions > 0 else 0
-    
-    conn.close()
+
+    close_db(conn)
     
     stats = {
         'total_questions': total_questions,
@@ -751,6 +1334,199 @@ def admin_dashboard():
         stats=stats,
         recent_questions=recent_questions
     )
+
+
+@app.route("/admin/schedule-exam", methods=["GET"])
+def admin_schedule_exam():
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+    return redirect("/admin/exam-center#exam-scheduling")
+
+
+@app.route("/admin/exam-center")
+def admin_exam_center():
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    runtime = get_exam_runtime(conn)
+    cur = conn.cursor()
+    cur.execute("SELECT id, title FROM questions ORDER BY id")
+    all_questions = cur.fetchall()
+    monitor = {"ready_count": 0, "in_progress_count": 0, "completed_count": 0, "total_count": 0}
+    if runtime["active"]:
+        monitor.update(participant_counts(conn, runtime["active"]["id"]))
+        monitor["total_count"] = get_total_participant_target(conn, runtime["active"])
+
+    close_db(conn)
+    return render_template(
+        "admin_exam_center.html",
+        exam_hidden=runtime["hidden"],
+        active_exam=runtime["active"],
+        exam_started=runtime["started"],
+        exam_paused=runtime["paused"],
+        monitor=monitor,
+        all_questions=all_questions,
+    )
+
+
+@app.route("/admin/create-session", methods=["POST"])
+def admin_create_session():
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    session_name = (request.form.get("session_name") or "Scheduled Exam").strip()
+    start_time_raw = request.form.get("start_time")
+    duration_minutes = int(request.form.get("duration_minutes") or "60")
+    question_ids = [int(qid) for qid in request.form.getlist("question_ids") if str(qid).isdigit()]
+
+    if not start_time_raw:
+        return redirect("/admin/exam-center")
+
+    try:
+        normalized = start_time_raw.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+        if parsed.tzinfo is not None:
+            start_time = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        else:
+            start_time = parsed
+    except ValueError:
+        return redirect("/admin/exam-center")
+
+    end_time = start_time + timedelta(minutes=duration_minutes)
+    selected_qids = serialize_question_ids(question_ids)
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    cur = conn.cursor()
+    cur.execute("UPDATE exam_sessions SET is_active = FALSE WHERE is_active = TRUE")
+    cur.execute(
+        """
+        INSERT INTO exam_sessions(
+            session_name, start_time, end_time, duration_minutes, is_active, question_ids,
+            participant_limit, auto_start_when_all_ready, is_paused
+        ) VALUES (%s, %s, %s, %s, TRUE, %s, %s, %s, FALSE)
+        """,
+        (
+            session_name,
+            start_time,
+            end_time,
+            duration_minutes,
+            selected_qids,
+            0,
+            False,
+        ),
+    )
+    conn.commit()
+    close_db(conn)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True})
+    return redirect("/admin/exam-center#exam-scheduling")
+
+
+@app.route("/admin/toggle-visibility", methods=["POST"])
+def admin_toggle_visibility():
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    target = request.form.get("hidden", "0")
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    set_exam_setting(conn, "questions_hidden", "1" if target == "1" else "0")
+    conn.commit()
+    close_db(conn)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True, "hidden": target == "1"})
+    return redirect("/admin/exam-center#exam-controls")
+
+
+@app.route("/admin/exam-controls", methods=["POST"])
+def admin_exam_controls():
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    action = request.form.get("action", "")
+    minutes = int(request.form.get("minutes") or "0")
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    active = get_active_exam_session(conn)
+    if active:
+        cur = conn.cursor()
+        if action == "force_start":
+            start_now = datetime.utcnow()
+            end_at = start_now + timedelta(minutes=int(active.get("duration_minutes", 0) or 0))
+            cur.execute(
+                """
+                UPDATE exam_sessions
+                SET start_time = %s,
+                    end_time = %s,
+                    is_paused = FALSE,
+                    paused_at = NULL
+                WHERE id = %s
+                """,
+                (start_now, end_at, active["id"]),
+            )
+        elif action == "stop_session":
+            cur.execute(
+                """
+                UPDATE exam_sessions
+                SET is_active = FALSE,
+                    is_paused = FALSE,
+                    paused_at = NULL,
+                    end_time = COALESCE(end_time, NOW())
+                WHERE id = %s
+                """,
+                (active["id"],),
+            )
+        elif action == "pause":
+            cur.execute("UPDATE exam_sessions SET is_paused = TRUE, paused_at = NOW() WHERE id = %s", (active["id"],))
+        elif action == "resume":
+            cur.execute(
+                """
+                UPDATE exam_sessions
+                SET is_paused = FALSE,
+                    start_time = CASE
+                        WHEN paused_at IS NOT NULL THEN start_time + (NOW() - paused_at)
+                        ELSE start_time
+                    END,
+                    end_time = CASE
+                        WHEN paused_at IS NOT NULL AND end_time IS NOT NULL THEN end_time + (NOW() - paused_at)
+                        ELSE end_time
+                    END,
+                    paused_at = NULL
+                WHERE id = %s
+                """,
+                (active["id"],),
+            )
+        elif action == "add_time" and minutes > 0:
+            cur.execute(
+                """
+                UPDATE exam_sessions
+                SET end_time = CASE
+                    WHEN end_time IS NULL THEN NOW() + (%s || ' minutes')::interval
+                    ELSE end_time + (%s || ' minutes')::interval
+                END,
+                duration_minutes = duration_minutes + %s
+                WHERE id = %s
+                """,
+                (minutes, minutes, minutes, active["id"]),
+            )
+
+    conn.commit()
+    close_db(conn)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True, "action": action})
+    return redirect("/admin/exam-center#live-monitor")
 
 @app.route("/admin/questions")
 def admin_questions():
@@ -771,7 +1547,7 @@ def admin_questions():
         ORDER BY q.id
     """)
     questions = cur.fetchall()
-    conn.close()
+    close_db(conn)
 
     return render_template("admin_questions.html", questions=questions)
 
@@ -794,7 +1570,7 @@ def delete_question(qid):
     cur.execute("DELETE FROM questions WHERE id = %s", (qid,))
 
     conn.commit()
-    conn.close()
+    close_db(conn)
 
     return redirect("/admin/questions")
 
@@ -841,7 +1617,7 @@ def admin():
             )
 
         conn.commit()
-        conn.close()
+        close_db(conn)
 
         return redirect("/admin/questions")
 
@@ -888,7 +1664,7 @@ def edit_question(qid):
             )
 
         conn.commit()
-        conn.close()
+        close_db(conn)
 
         return redirect("/admin/questions")
 
@@ -909,7 +1685,7 @@ def edit_question(qid):
     )
     test_cases = cur.fetchall()
 
-    conn.close()
+    close_db(conn)
 
     return render_template(
         "admin_edit.html",
@@ -930,7 +1706,7 @@ def admin_users():
     cur = conn.cursor()
     cur.execute("SELECT id, username FROM users ORDER BY id")
     users = cur.fetchall()
-    conn.close()
+    close_db(conn)
     
     return render_template("admin_users.html", users=users)
 
@@ -978,7 +1754,7 @@ def admin_user_reports():
             'success_rate': success_rate
         })
     
-    conn.close()
+    close_db(conn)
     
     return render_template("admin_user_reports.html", users=user_stats)
 
@@ -998,7 +1774,7 @@ def admin_user_detail(user_id):
     user = cur.fetchone()
     
     if not user:
-        conn.close()
+        close_db(conn)
         return "User not found", 404
     
     username = user[0]
@@ -1042,7 +1818,7 @@ def admin_user_detail(user_id):
             'status': status
         })
     
-    conn.close()
+    close_db(conn)
     
     return render_template(
         "admin_user_detail.html",
@@ -1106,7 +1882,7 @@ def admin_reports():
     avg_score_result = cur.fetchone()[0]
     avg_score = round(avg_score_result, 1) if avg_score_result else 0
     
-    conn.close()
+    close_db(conn)
     
     return render_template(
         "admin_reports.html",
@@ -1122,30 +1898,56 @@ def admin_reports():
 def report():
     if not is_logged_in():
         return redirect("/login")
+    if is_admin():
+        return redirect("/admin/dashboard")
     
     conn = db()
     if not conn:
         return "Database connection error", 500
-        
+
+    runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    selected_questions = []
+    if runtime["active"]:
+        selected_questions = resolve_exam_question_ids(conn, runtime["active"])
+
     cur = conn.cursor()
-    
-    # Get user's submission summary
-    cur.execute("""
-        SELECT q.title, 
-               CASE 
-                   WHEN s.verdict IS NULL THEN 'NO ATTEMPT'
-                   ELSE s.verdict 
-               END as verdict,
-               COALESCE(s.score, 0) as score
-        FROM questions q
-        LEFT JOIN submissions s ON s.question_id = q.id AND s.user_id = %s
-        ORDER BY q.id
-    """, (session["user_id"],))
+
+    if selected_questions:
+        cur.execute(
+            """
+            SELECT q.title,
+                   CASE
+                       WHEN s.verdict IS NULL THEN 'NO ATTEMPT'
+                       ELSE s.verdict
+                   END as verdict,
+                   COALESCE(s.score, 0) as score
+            FROM questions q
+            LEFT JOIN submissions s ON s.question_id = q.id AND s.user_id = %s
+            WHERE q.id = ANY(%s)
+            ORDER BY q.id
+            """,
+            (session["user_id"], selected_questions),
+        )
+    else:
+        cur.execute(
+            """
+            SELECT q.title,
+                   CASE
+                       WHEN s.verdict IS NULL THEN 'NO ATTEMPT'
+                       ELSE s.verdict
+                   END as verdict,
+                   COALESCE(s.score, 0) as score
+            FROM questions q
+            LEFT JOIN submissions s ON s.question_id = q.id AND s.user_id = %s
+            ORDER BY q.id
+            """,
+            (session["user_id"],),
+        )
     
     rows = cur.fetchall()
     total = sum(r[2] for r in rows if r[2] and r[1] != 'NO ATTEMPT') if rows else 0
     
-    conn.close()
+    close_db(conn)
     
     return render_template("report.html", rows=rows, total=total)
 if __name__ == "__main__":

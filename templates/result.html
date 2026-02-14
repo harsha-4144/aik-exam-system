@@ -88,19 +88,32 @@
             margin-top: 24px;
             display: flex;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
-        a.button {
+        a.button, button.button {
             text-decoration: none;
             background: #2563eb;
             color: white;
             padding: 8px 16px;
             border-radius: 4px;
             font-size: 14px;
+            border: none;
+            cursor: pointer;
         }
 
         a.retry {
             background: #dc2626;
+        }
+
+        .section-title {
+            margin-top: 22px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .muted {
+            color: #6b7280;
         }
     </style>
 </head>
@@ -114,10 +127,11 @@
     <div class="verdict {{ verdict }}">{{ verdict }}</div>
 
     <div class="summary">
-        Passed {{ passed }} out of {{ total }} test cases
+        Hidden test cases passed: {{ hidden_passed }} / {{ hidden_total }}
     </div>
 
-    {% if results %}
+    <div class="section-title">Example Test Cases</div>
+    {% if example_results %}
     <table>
         <tr>
             <th>#</th>
@@ -127,7 +141,7 @@
             <th>Your Output</th>
         </tr>
 
-        {% for r in results %}
+        {% for r in example_results %}
         <tr>
             <td>{{ r.id }}</td>
             <td class="{{ 'pass' if r.status == 'PASS' else 'fail' }}">
@@ -139,17 +153,47 @@
         </tr>
         {% endfor %}
     </table>
+    {% else %}
+    <p class="muted">No example test cases configured for this question.</p>
+    {% endif %}
+
+    <div class="section-title">Hidden Test Cases</div>
+    <p class="muted">Passed {{ hidden_passed }} out of {{ hidden_total }} hidden test cases. Inputs/outputs are hidden during exam.</p>
+
+    {% if sequential_mode %}
+    <p class="muted">Auto proceeding in <strong id="autoTimer">{{ auto_seconds }}</strong>s</p>
     {% endif %}
 
     <div class="actions">
-        {% if verdict != "PASS" %}
+        {% if verdict != "PASS" and not sequential_mode %}
             <a href="/question/{{ question_id }}" class="button retry">Retry</a>
         {% endif %}
-        <a href="/" class="button">Back to Questions</a>
+        {% if sequential_mode %}
+            <a href="{{ next_url }}" class="button">Next Question</a>
+        {% else %}
+            <a href="/" class="button">Back to Questions</a>
+        {% endif %}
     </div>
 
 </div>
 </div>
+
+{% if sequential_mode %}
+<script>
+    let remaining = Number({{ auto_seconds }});
+    const timer = document.getElementById("autoTimer");
+    const nextUrl = "{{ next_url }}";
+    const interval = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+            clearInterval(interval);
+            window.location.href = nextUrl;
+            return;
+        }
+        timer.textContent = String(remaining);
+    }, 1000);
+</script>
+{% endif %}
 
 </body>
 </html>

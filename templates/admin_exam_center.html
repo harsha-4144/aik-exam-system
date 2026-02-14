@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Controls</title>
+    <style>
+        :root {
+            --bg: #eef2f7;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --line: #d9e2ec;
+            --text: #0f172a;
+            --muted: #5b6b81;
+            --primary: #0b5fff;
+            --primary-strong: #0046c7;
+            --success: #0f9d58;
+            --warning: #e3a008;
+            --danger: #dc2626;
+            --shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background:
+                radial-gradient(circle at 10% 0%, rgba(11, 95, 255, 0.08), transparent 35%),
+                radial-gradient(circle at 90% 100%, rgba(15, 157, 88, 0.08), transparent 30%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            height: 58px;
+            background: #0b1220;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid #000;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .user-info {
+            font-size: 14px;
+            color: #a8b3c7;
+        }
+
+        .user-info a {
+            color: #a8b3c7;
+            text-decoration: none;
+            margin-left: 12px;
+        }
+
+        .user-info a:hover { color: #ffffff; }
+
+        .page {
+            max-width: 1240px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        .shell {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .hero {
+            padding: 24px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(135deg, #f8fbff 0%, #f3f7ff 50%, #f8fffb 100%);
+        }
+
+        .hero-top {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            align-items: start;
+            column-gap: 16px;
+        }
+
+        .hero-heading {
+            min-width: 0;
+        }
+
+        .hero h1 {
+            font-size: 28px;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .inline-toggle {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            width: 100%;
+        }
+
+        .toggle-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-title {
+            font-size: 12px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .switch-form { margin: 0; }
+        .switch-btn {
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .switch-track {
+            width: 50px;
+            height: 28px;
+            border-radius: 999px;
+            background: #d1d9e6;
+            position: relative;
+            transition: background 0.2s ease;
+        }
+
+        .switch-track::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            transition: transform 0.2s ease;
+        }
+
+        .switch-track.on {
+            background: var(--success);
+        }
+
+        .switch-track.on::after {
+            transform: translateX(22px);
+        }
+
+        .switch-state {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .switch-state.hidden { color: #9f1239; }
+        .switch-state.visible { color: #166534; }
+
+        .toggle-help {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .content {
+            padding: 22px;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .subtext {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .form-row { margin-bottom: 12px; }
+
+        .form-row label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 8px 10px;
+            background: #fff;
+            font-size: 14px;
+        }
+
+        .datetime-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .question-list {
+            max-height: 230px;
+            overflow-y: auto;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff;
+            padding: 8px;
+        }
+
+        .question-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .question-item:hover {
+            background: #f4f8ff;
+        }
+
+        .question-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            flex: 0 0 auto;
+        }
+
+        .question-text {
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-strong); }
+        .btn-secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-warning { background: var(--warning); color: #111827; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .metric {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #d6e1f2;
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 92px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .metric .label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-weight: 700;
+        }
+
+        .metric .value {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .metric.ready .value {
+            color: #0b5fff;
+        }
+
+        .metric.progress .value {
+            color: #1d4ed8;
+        }
+
+        .metric.done .value {
+            color: #0f9d58;
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .monitor-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .monitor-toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .monitor-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .monitor-badge {
+            border: 1px solid #d6e1f2;
+            background: #eff6ff;
+            color: #1e3a8a;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .monitor-note {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .scheduled-highlight {
+            margin: 8px 0 12px;
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid #f5d48a;
+            background: #fff7df;
+            color: #8a5a00;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .monitor-time {
+            border: 1px solid #d6e1f2;
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .add-time-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .add-time-form input[type="number"] {
+            width: 120px;
+        }
+
+        @media (max-width: 980px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .hero-top {
+                grid-template-columns: 1fr;
+                row-gap: 12px;
+            }
+
+            .inline-toggle {
+                width: 100%;
+            }
+
+            .datetime-row,
+            .monitor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="header-title">Exam Controls</div>
+    <div class="user-info">
+        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="shell">
+        <div class="hero">
+            <div class="hero-top">
+                <div class="hero-heading">
+                    <h1>Synchronized Exam Controls</h1>
+                    <p>Schedule start, control visibility, and monitor live student state from one place.</p>
+                </div>
+
+                <div class="inline-toggle" id="exam-controls">
+                    <div class="toggle-head">
+                        <span class="toggle-title">Questions Page Visibility</span>
+                        <form method="POST" action="/admin/toggle-visibility" class="switch-form">
+                            <input type="hidden" name="hidden" value="{{ 0 if exam_hidden else 1 }}">
+                            <button class="switch-btn" type="submit" title="Toggle visibility" id="visibilitySwitchBtn">
+                                <span class="switch-track {{ '' if exam_hidden else 'on' }}" id="switchTrack"></span>
+                                <span class="switch-state {{ 'hidden' if exam_hidden else 'visible' }}" id="switchStateText">
+                                    {% if exam_hidden %}OFF (Hidden){% else %}ON (Visible){% endif %}
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="toggle-help" id="switchHelpText">
+                        {% if exam_hidden %}
+                        Students are in exam mode.
+                        {% else %}
+                        Students are in practice mode.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="card" id="exam-scheduling">
+                <h3>Exam Scheduling</h3>
+                <div class="subtext">Set the session timing and pick questions to include.</div>
+
+                <form method="POST" action="/admin/create-session" id="scheduleForm">
+                    <div class="form-row">
+                        <label>Session Name</label>
+                        <input type="text" name="session_name" value="Batch Exam" required>
+                    </div>
+
+                    <div class="datetime-row">
+                        <div class="form-row">
+                            <label>Start Date</label>
+                            <input type="date" id="startDate" required>
+                        </div>
+                        <div class="form-row">
+                            <label>Start Time</label>
+                            <input type="time" id="startTime" required>
+                        </div>
+                    </div>
+                    <input type="hidden" name="start_time" id="startDateTime">
+                    <div class="hint">Use local date/time. Exam begins exactly at this time unless force-started.</div>
+
+                    <div class="form-row">
+                        <label>Duration (minutes)</label>
+                        <input type="number" name="duration_minutes" min="1" value="60" required>
+                        <div class="hint">Defines exam length and end time window.</div>
+                    </div>
+
+                    <div class="form-row">
+                        <label>Questions Included</label>
+                        <div class="question-list">
+                            {% for q in all_questions %}
+                            <label class="question-item">
+                                <input type="checkbox" name="question_ids" value="{{ q[0] }}">
+                                <span class="question-text">#{{ q[0] }} - {{ q[1] }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <div class="hint">Select at least one question.</div>
+                    </div>
+
+                    <button class="btn btn-primary" type="submit">Schedule Exam</button>
+                </form>
+            </div>
+
+            <div class="card" id="live-monitor">
+                <div class="monitor-head">
+                    <h3 style="margin:0;">Live Exam Monitor</h3>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <form method="POST" action="/admin/exam-controls" id="stopSessionForm">
+                            <input type="hidden" name="action" value="stop_session">
+                            <button class="btn btn-warning" type="submit">Stop Session</button>
+                        </form>
+                        <form method="POST" action="/admin/exam-controls" id="forceStartForm">
+                            <input type="hidden" name="action" value="force_start">
+                            <button class="btn btn-danger" type="submit">Force Start Now</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="subtext">Real-time readiness and progression overview.</div>
+                <div class="scheduled-highlight" id="monitorScheduledAt">Scheduled: --</div>
+                <div class="monitor-toolbar">
+                    <span class="monitor-badge">Live Snapshot</span>
+                    <div class="monitor-toolbar-right">
+                        <span class="monitor-time" id="monitorTimeLeft">--:--:--</span>
+                        <span class="monitor-note" id="monitorLastUpdated">Auto refresh every 5s</span>
+                    </div>
+                </div>
+
+                <div class="monitor-grid">
+                    <div class="metric ready">
+                        <div class="label">Ready</div>
+                        <div class="value" id="monitorReady">{{ monitor.ready_count }}/{{ monitor.total_count }}</div>
+                    </div>
+                    <div class="metric progress">
+                        <div class="label">In Progress</div>
+                        <div class="value" id="monitorProgress">{{ monitor.in_progress_count }}</div>
+                    </div>
+                    <div class="metric done">
+                        <div class="label">Completed</div>
+                        <div class="value" id="monitorCompleted">{{ monitor.completed_count }}</div>
+                    </div>
+                </div>
+
+                <form method="POST" action="/admin/exam-controls" class="add-time-form" id="addTimeForm">
+                    <input type="hidden" name="action" value="add_time">
+                    <input type="number" name="minutes" min="1" value="10">
+                    <button class="btn btn-primary" type="submit">Add Time (minutes)</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const EXAM_CENTER_SCROLL_KEY = "exam_center_scroll_y";
+
+    window.addEventListener("load", () => {
+        const savedY = sessionStorage.getItem(EXAM_CENTER_SCROLL_KEY);
+        if (savedY !== null) {
+            window.scrollTo(0, Number(savedY) || 0);
+            sessionStorage.removeItem(EXAM_CENTER_SCROLL_KEY);
+        }
+    });
+
+    document.querySelectorAll("form").forEach((formEl) => {
+        formEl.addEventListener("submit", () => {
+            sessionStorage.setItem(EXAM_CENTER_SCROLL_KEY, String(window.scrollY));
+        });
+    });
+
+    const form = document.getElementById("scheduleForm");
+    const startDate = document.getElementById("startDate");
+    const startTime = document.getElementById("startTime");
+    const hiddenDateTime = document.getElementById("startDateTime");
+    const switchForm = document.querySelector(".switch-form");
+    const hiddenField = switchForm ? switchForm.querySelector('input[name="hidden"]') : null;
+    const switchTrack = document.getElementById("switchTrack");
+    const switchStateText = document.getElementById("switchStateText");
+    const switchHelpText = document.getElementById("switchHelpText");
+    const forceStartForm = document.getElementById("forceStartForm");
+    const stopSessionForm = document.getElementById("stopSessionForm");
+    const addTimeForm = document.getElementById("addTimeForm");
+    const monitorReady = document.getElementById("monitorReady");
+    const monitorProgress = document.getElementById("monitorProgress");
+    const monitorCompleted = document.getElementById("monitorCompleted");
+    const monitorLastUpdated = document.getElementById("monitorLastUpdated");
+    const monitorTimeLeft = document.getElementById("monitorTimeLeft");
+    const monitorScheduledAt = document.getElementById("monitorScheduledAt");
+    let localRemainingSeconds = null;
+    let isTimerRunning = false;
+
+    function renderSwitchState(isHidden) {
+        if (!switchTrack || !switchStateText || !switchHelpText || !hiddenField) return;
+        switchTrack.classList.toggle("on", !isHidden);
+        switchStateText.classList.toggle("hidden", isHidden);
+        switchStateText.classList.toggle("visible", !isHidden);
+        switchStateText.textContent = isHidden ? "OFF (Hidden)" : "ON (Visible)";
+        switchHelpText.innerHTML = isHidden
+            ? "Students are in exam mode."
+            : "Students are in practice mode.";
+        hiddenField.value = isHidden ? "0" : "1";
+    }
+
+    if (switchForm && hiddenField) {
+        switchForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(switchForm));
+            const response = await fetch("/admin/toggle-visibility", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "fetch"
+                },
+                body: formData.toString()
+            });
+            if (!response.ok) return;
+            const currentlyHidden = hiddenField.value === "0";
+            renderSwitchState(!currentlyHidden);
+        });
+    }
+
+    if (forceStartForm) {
+        forceStartForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(forceStartForm));
+            const response = await fetch("/admin/exam-controls", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "fetch"
+                },
+                body: formData.toString()
+            });
+            if (!response.ok) return;
+            await refreshMonitor();
+        });
+    }
+
+    if (stopSessionForm) {
+        stopSessionForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(stopSessionForm));
+            const response = await fetch("/admin/exam-controls", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "fetch"
+                },
+                body: formData.toString()
+            });
+            if (!response.ok) return;
+            await refreshMonitor();
+        });
+    }
+
+    if (addTimeForm) {
+        addTimeForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(addTimeForm));
+            const response = await fetch("/admin/exam-controls", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "fetch"
+                },
+                body: formData.toString()
+            });
+            if (!response.ok) return;
+            await refreshMonitor();
+        });
+    }
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const selected = document.querySelectorAll('input[name="question_ids"]:checked');
+        if (!startDate.value || !startTime.value) {
+            alert("Please choose both start date and start time.");
+            return;
+        }
+        if (selected.length === 0) {
+            alert("Select at least one question.");
+            return;
+        }
+        const localDateTime = new Date(`${startDate.value}T${startTime.value}`);
+        hiddenDateTime.value = localDateTime.toISOString();
+
+        const formData = new URLSearchParams(new FormData(form));
+        fetch("/admin/create-session", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-Requested-With": "fetch"
+            },
+            body: formData.toString()
+        })
+        .then((response) => {
+            if (!response.ok) throw new Error("Schedule failed");
+            return response.json();
+        })
+        .then(() => {
+            refreshMonitor();
+            alert("Exam scheduled successfully.");
+        })
+        .catch(() => {
+            alert("Failed to schedule exam.");
+        });
+    });
+
+    async function refreshMonitor() {
+        if (!monitorReady || !monitorProgress || !monitorCompleted) return;
+        try {
+            const response = await fetch("/exam-status");
+            if (!response.ok) return;
+            const data = await response.json();
+            monitorReady.textContent = `${data.ready_count}/${data.total_count}`;
+            monitorProgress.textContent = `${data.in_progress_count}`;
+            monitorCompleted.textContent = `${data.completed_count}`;
+            isTimerRunning = Boolean(data.has_session && data.started && !data.paused);
+            const sec = Number(data.remaining_seconds);
+            localRemainingSeconds = Number.isFinite(sec) ? Math.max(0, sec) : null;
+            if (monitorScheduledAt) {
+                if (data.scheduled_start_iso) {
+                    const dt = new Date(data.scheduled_start_iso);
+                    monitorScheduledAt.textContent = `Scheduled: ${dt.toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`;
+                } else {
+                    monitorScheduledAt.textContent = "Scheduled: --";
+                }
+            }
+            if (monitorLastUpdated) {
+                const now = new Date();
+                monitorLastUpdated.textContent = `Last updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+            }
+        } catch (_) {}
+    }
+
+    function renderLocalTimer() {
+        if (!monitorTimeLeft) return;
+        if (localRemainingSeconds === null) {
+            monitorTimeLeft.textContent = "--:--:--";
+            return;
+        }
+        const s = Math.max(0, Number(localRemainingSeconds) || 0);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const r = s % 60;
+        monitorTimeLeft.textContent = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+    }
+
+    setInterval(refreshMonitor, 5000);
+    setInterval(() => {
+        if (isTimerRunning && localRemainingSeconds !== null && localRemainingSeconds > 0) {
+            localRemainingSeconds -= 1;
+        }
+        renderLocalTimer();
+    }, 1000);
+    refreshMonitor();
+</script>
+</body>
+</html>

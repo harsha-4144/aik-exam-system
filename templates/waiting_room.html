@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waiting Room | CodeArenaX</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --border: #dcdfe3;
+            --text: #111827;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            height: 56px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header a {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .page {
+            min-height: calc(100vh - 56px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 680px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .countdown {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #f9fafb;
+            margin-bottom: 16px;
+        }
+
+        .countdown-value {
+            font-family: "Courier New", monospace;
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .status-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-box {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            background: white;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 6px;
+        }
+
+        .status-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .status-value.ready {
+            color: var(--success);
+        }
+
+        .status-value.paused {
+            color: var(--warning);
+        }
+
+        .btn {
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 10px 18px;
+            cursor: pointer;
+        }
+
+        .btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .note {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 640px) {
+            .status-row {
+                grid-template-columns: 1fr;
+            }
+            .countdown-value {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div>CodeArenaX</div>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="page">
+    <div class="card">
+        <div class="title">Waiting Room</div>
+        <div class="subtitle" id="sessionName">{{ session_name }}</div>
+
+        <div class="countdown">
+            <div class="status-label">Exam starts in</div>
+            <p class="countdown-value" id="countdown">--:--:--</p>
+        </div>
+
+        <div class="status-row">
+            <div class="status-box">
+                <div class="status-label">Ready Participants</div>
+                <div class="status-value ready" id="readyText">{{ ready_count }}/{{ total_count }}</div>
+            </div>
+            <div class="status-box">
+                <div class="status-label">Session State</div>
+                <div class="status-value {% if paused %}paused{% endif %}" id="sessionState">
+                    {% if paused %}Paused{% else %}Waiting{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" id="readyBtn">Ready</button>
+        <div class="note">Status refreshes every 2 seconds. You will be redirected automatically when the exam starts.</div>
+    </div>
+</div>
+
+<script>
+    const countdownEl = document.getElementById("countdown");
+    const readyText = document.getElementById("readyText");
+    const readyBtn = document.getElementById("readyBtn");
+    const sessionState = document.getElementById("sessionState");
+    const sessionName = document.getElementById("sessionName");
+
+    let markedReady = false;
+    let currentSeconds = 0;
+
+    function formatDuration(sec) {
+        const s = Math.max(0, Number(sec) || 0);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const r = s % 60;
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+    }
+
+    async function refreshStatus() {
+        const response = await fetch("/exam-status");
+        if (!response.ok) return;
+        const data = await response.json();
+
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+            return;
+        }
+
+        if (data.session_name) {
+            sessionName.textContent = data.session_name;
+        }
+
+        readyText.textContent = `${data.ready_count}/${data.total_count}`;
+        sessionState.textContent = data.paused ? "Paused" : "Waiting";
+        currentSeconds = data.seconds_to_start || 0;
+        countdownEl.textContent = formatDuration(currentSeconds);
+    }
+
+    setInterval(() => {
+        if (currentSeconds > 0) currentSeconds -= 1;
+        countdownEl.textContent = formatDuration(currentSeconds);
+    }, 1000);
+
+    setInterval(refreshStatus, 2000);
+    refreshStatus();
+
+    readyBtn.addEventListener("click", async () => {
+        if (markedReady) return;
+        const response = await fetch("/student-ready", { method: "POST" });
+        if (response.ok) {
+            markedReady = true;
+            readyBtn.disabled = true;
+            readyBtn.textContent = "Ready Confirmed";
+            await refreshStatus();
+        }
+    });
+</script>
+</body>
+</html>
