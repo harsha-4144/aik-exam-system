@@ -1,0 +1,12 @@
+name: exam-system
+service:
+  name: web
+  ports:
+    - port: 8000
+  routes:
+    - path: /
+  env:
+    - name: FLASK_ENV
+      value: production
+    - name: FLASK_DEBUG
+      value: "false"
