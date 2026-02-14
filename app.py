@@ -8,7 +8,7 @@ import tempfile
 import threading
 import time
 import uuid
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
@@ -379,38 +379,6 @@ def login():
                 return redirect("/")
     
     return render_template("login.html", error=error)
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        
-        if not username or not password:
-            return "Username and password required"
-        
-        hashed = generate_password_hash(password)
-        
-        conn = db()
-        if not conn:
-            return "Database connection error", 500
-            
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-        if cur.fetchone():
-            conn.close()
-            return "User already exists. Please login."
-        
-        cur.execute(
-            "INSERT INTO users (username, password) VALUES (%s, %s)",
-            (username, hashed)
-        )
-        conn.commit()
-        conn.close()
-        
-        return redirect("/login")
-    
-    return render_template("register.html")
 
 @app.route("/logout")
 def logout():
