@@ -721,7 +721,8 @@ def logout():
 def questions():
     if "user_id" not in session:
         return redirect("/login")
-    if is_admin():
+    preview_mode = request.args.get("preview") == "1"
+    if is_admin() and not preview_mode:
         return redirect("/admin/dashboard")
     
     conn = db()
@@ -729,7 +730,7 @@ def questions():
         return "Database connection error", 500
 
     runtime = get_exam_runtime(conn, user_id=session["user_id"])
-    if runtime["hidden"]:
+    if runtime["hidden"] and not is_admin():
         if runtime["active"]:
             ensure_participant(conn, runtime["active"]["id"], session["user_id"])
             conn.commit()
@@ -767,7 +768,8 @@ def questions():
 def exam_page(qid):
     if not is_logged_in():
         return redirect("/login")
-    if is_admin():
+    preview_mode = request.args.get("preview") == "1"
+    if is_admin() and not preview_mode:
         return redirect("/admin/dashboard")
     
     conn = db()
@@ -775,7 +777,7 @@ def exam_page(qid):
         return "Database connection error", 500
 
     runtime = get_exam_runtime(conn, user_id=session["user_id"])
-    if runtime["hidden"]:
+    if runtime["hidden"] and not is_admin():
         if not runtime["active"] or not runtime["started"] or runtime["paused"]:
             close_db(conn)
             return redirect("/waiting-room")
@@ -967,6 +969,7 @@ def exam_status():
             "remaining_seconds": remaining_seconds,
             "duration_minutes": int(active.get("duration_minutes", 0)) if active else 0,
             "scheduled_start_iso": start_time.isoformat() if start_time else None,
+            "end_time_iso": end_time.isoformat() if end_time else None,
             "ready_count": counts["ready_count"],
             "in_progress_count": counts["in_progress_count"],
             "completed_count": counts["completed_count"],
@@ -1356,6 +1359,17 @@ def admin_exam_center():
     cur = conn.cursor()
     cur.execute("SELECT id, title FROM questions ORDER BY id")
     all_questions = cur.fetchall()
+
+    cur_dict = conn.cursor(cursor_factory=RealDictCursor)
+    cur_dict.execute(
+        """
+        SELECT id, session_name, start_time, end_time, duration_minutes, is_active, question_ids, created_at
+        FROM exam_sessions
+        ORDER BY created_at DESC
+        LIMIT 50
+        """
+    )
+    existing_sessions = cur_dict.fetchall()
     monitor = {"ready_count": 0, "in_progress_count": 0, "completed_count": 0, "total_count": 0}
     if runtime["active"]:
         monitor.update(participant_counts(conn, runtime["active"]["id"]))
@@ -1370,6 +1384,7 @@ def admin_exam_center():
         exam_paused=runtime["paused"],
         monitor=monitor,
         all_questions=all_questions,
+        existing_sessions=existing_sessions,
     )
 
 
@@ -1381,6 +1396,7 @@ def admin_create_session():
     session_name = (request.form.get("session_name") or "Scheduled Exam").strip()
     start_time_raw = request.form.get("start_time")
     duration_minutes = int(request.form.get("duration_minutes") or "60")
+    session_id_raw = request.form.get("session_id")
     question_ids = [int(qid) for qid in request.form.getlist("question_ids") if str(qid).isdigit()]
 
     if not start_time_raw:
@@ -1404,24 +1420,39 @@ def admin_create_session():
         return "Database connection error", 500
 
     cur = conn.cursor()
-    cur.execute("UPDATE exam_sessions SET is_active = FALSE WHERE is_active = TRUE")
-    cur.execute(
-        """
-        INSERT INTO exam_sessions(
-            session_name, start_time, end_time, duration_minutes, is_active, question_ids,
-            participant_limit, auto_start_when_all_ready, is_paused
-        ) VALUES (%s, %s, %s, %s, TRUE, %s, %s, %s, FALSE)
-        """,
-        (
-            session_name,
-            start_time,
-            end_time,
-            duration_minutes,
-            selected_qids,
-            0,
-            False,
-        ),
-    )
+    if session_id_raw and str(session_id_raw).isdigit():
+        session_id = int(session_id_raw)
+        cur.execute(
+            """
+            UPDATE exam_sessions
+            SET session_name = %s,
+                start_time = %s,
+                end_time = %s,
+                duration_minutes = %s,
+                question_ids = %s
+            WHERE id = %s
+            """,
+            (session_name, start_time, end_time, duration_minutes, selected_qids, session_id),
+        )
+    else:
+        cur.execute("UPDATE exam_sessions SET is_active = FALSE WHERE is_active = TRUE")
+        cur.execute(
+            """
+            INSERT INTO exam_sessions(
+                session_name, start_time, end_time, duration_minutes, is_active, question_ids,
+                participant_limit, auto_start_when_all_ready, is_paused
+            ) VALUES (%s, %s, %s, %s, TRUE, %s, %s, %s, FALSE)
+            """,
+            (
+                session_name,
+                start_time,
+                end_time,
+                duration_minutes,
+                selected_qids,
+                0,
+                False,
+            ),
+        )
     conn.commit()
     close_db(conn)
     if request.headers.get("X-Requested-With") == "fetch":
@@ -1445,6 +1476,25 @@ def admin_toggle_visibility():
     if request.headers.get("X-Requested-With") == "fetch":
         return jsonify({"ok": True, "hidden": target == "1"})
     return redirect("/admin/exam-center#exam-controls")
+
+
+@app.route("/admin/delete-session/<int:session_id>", methods=["POST"])
+def admin_delete_session(session_id):
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    cur = conn.cursor()
+    cur.execute("DELETE FROM exam_sessions WHERE id = %s", (session_id,))
+    conn.commit()
+    close_db(conn)
+
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True, "deleted_id": session_id})
+    return redirect("/admin/exam-center#exam-scheduling")
 
 
 @app.route("/admin/exam-controls", methods=["POST"])
@@ -1619,7 +1669,7 @@ def admin():
         conn.commit()
         close_db(conn)
 
-        return redirect("/admin/questions")
+        return redirect("/admin/dashboard")
 
     return render_template("admin.html")
 
@@ -1710,6 +1760,46 @@ def admin_users():
     
     return render_template("admin_users.html", users=users)
 
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+def delete_user(user_id):
+    if not is_logged_in() or not is_admin():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+
+    conn = db()
+    if not conn:
+        return jsonify({"ok": False, "error": "Database connection error"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
+        user = cur.fetchone()
+
+        if not user:
+            return jsonify({"ok": False, "error": "User not found"}), 404
+
+        username = user[1]
+        if username == "admin":
+            return jsonify({"ok": False, "error": "Cannot delete admin user"}), 400
+
+        if session.get("user_id") == user_id:
+            return jsonify({"ok": False, "error": "Cannot delete your own account"}), 400
+
+        cur.execute("DELETE FROM exam_participants WHERE user_id = %s", (user_id,))
+        cur.execute("DELETE FROM exam_progress WHERE user_id = %s", (user_id,))
+        cur.execute("DELETE FROM submissions WHERE user_id = %s", (user_id,))
+        cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+
+        return jsonify({"ok": True, "user_id": user_id, "username": username})
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return jsonify({"ok": False, "error": "Failed to delete user"}), 500
+    finally:
+        close_db(conn)
+
 # ---------- ADMIN USER REPORTS ----------
 
 @app.route("/admin/user_reports")
@@ -1778,6 +1868,21 @@ def admin_user_detail(user_id):
         return "User not found", 404
     
     username = user[0]
+
+    # Match the display ID used in /admin/user_reports (ordered by username, then id)
+    cur.execute(
+        """
+        SELECT display_id
+        FROM (
+            SELECT id, ROW_NUMBER() OVER (ORDER BY username, id) AS display_id
+            FROM users
+        ) ranked
+        WHERE id = %s
+        """,
+        (user_id,),
+    )
+    display_row = cur.fetchone()
+    display_user_id = display_row[0] if display_row else user_id
     
     # Get user's submissions with question details
     cur.execute("""
@@ -1823,6 +1928,7 @@ def admin_user_detail(user_id):
     return render_template(
         "admin_user_detail.html",
         user_id=user_id,
+        display_user_id=display_user_id,
         username=username,
         submissions=submissions,
         total_submissions=total_submissions,

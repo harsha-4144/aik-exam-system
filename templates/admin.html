@@ -1,129 +1,250 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Create Question - Admin Panel</title>
+    <title>Create Question - Admin</title>
     <style>
         :root {
-            --bg: #f4f6f8;
+            --bg: #eef3f9;
             --panel: #ffffff;
-            --border: #dcdfe3;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary: #6b7280;
-            --text: #111827;
-            --text-light: #6b7280;
+            --soft: #f8fbff;
+            --line: #d6e0ec;
+            --text: #0f172a;
+            --muted: #5b6b81;
+            --primary: #0b5fff;
+            --primary-hover: #0046c7;
+            --success: #0f9d58;
             --danger: #dc2626;
-            --success: #16a34a;
+            --shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at 10% -10%, rgba(11,95,255,0.09), transparent 35%), var(--bg);
             color: var(--text);
-            line-height: 1.5;
+            line-height: 1.45;
+            min-height: 100vh;
         }
 
         .header {
-            height: 56px;
-            background: #111827;
-            color: white;
+            height: 58px;
+            background: #0b1220;
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
-            font-size: 18px;
-            font-weight: 600;
             border-bottom: 1px solid #000;
         }
 
-        .page {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 24px;
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
         }
 
-        .container {
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-nav a {
+            color: #e2ebfa;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            background: rgba(148, 163, 184, 0.14);
+            transition: all 0.2s ease;
+        }
+
+        .header-nav a:hover {
+            color: #fff;
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 18px;
+        }
+
+        .shell {
             background: var(--panel);
-            border-radius: 8px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
             overflow: hidden;
         }
 
-        .content-header {
+        .hero {
             padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            background: #f9fafb;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(135deg, #f8fbff 0%, #f2f7ff 100%);
+        }
+
+        .hero h1 {
+            font-size: 24px;
+            margin-bottom: 6px;
         }
 
         .breadcrumb {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--muted);
         }
 
         .breadcrumb a {
             color: var(--primary);
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        h1 {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text);
-            margin: 0;
+        .breadcrumb a:hover {
+            text-decoration: underline;
         }
 
-        .form-content {
-            padding: 24px;
+        .breadcrumb .separator {
+            color: var(--muted);
         }
 
-        .form-grid {
+        .hero p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .form-wrap {
+            padding: 20px;
+        }
+
+        .tab-shell {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px;
+            border: 1px solid #d7e2f2;
+            background: #eaf0fa;
+            border-radius: 999px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .tab-nav {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 8px 16px rgba(11, 95, 255, 0.16);
+            transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1), width 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            z-index: 0;
+        }
+
+        .tab-btn {
+            position: relative;
+            z-index: 1;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #4d5f7a;
+            background: transparent;
+            cursor: pointer;
+            transition: color 200ms ease, transform 200ms ease;
+        }
+
+        .tab-btn:hover {
+            color: #1f3a63;
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            color: #0b3f9f;
+        }
+
+        .tab-content {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-panel {
+            display: none;
+            opacity: 0;
+            transform: translateX(0);
+            will-change: transform, opacity;
+        }
+
+        .tab-panel.active {
+            display: block;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .tab-panel.anim-in-right {
+            animation: panelInFromRight 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        .tab-panel.anim-in-left {
+            animation: panelInFromLeft 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        @keyframes panelInFromRight {
+            0% { opacity: 0; transform: translateX(22px) translateY(3px); }
+            100% { opacity: 1; transform: translateX(0) translateY(0); }
+        }
+
+        @keyframes panelInFromLeft {
+            0% { opacity: 0; transform: translateX(-22px) translateY(3px); }
+            100% { opacity: 1; transform: translateX(0) translateY(0); }
+        }
+
+        .layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
+            grid-template-columns: 1.05fr 1fr;
+            gap: 16px;
+            align-items: start;
         }
 
-        @media (max-width: 768px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .form-section {
-            background: #f9fafb;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+        .card {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 12px;
             padding: 16px;
         }
 
-        .form-section h2 {
-            font-size: 16px;
-            font-weight: 600;
-            margin: 0 0 16px 0;
-            color: var(--text);
+        .card h2 {
+            font-size: 15px;
+            margin-bottom: 12px;
         }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
+        .group { margin-bottom: 12px; }
+        .group:last-child { margin-bottom: 0; }
 
         label {
             display: block;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 6px;
-            color: var(--text);
+            color: #1f2937;
         }
 
         .required::after {
@@ -132,48 +253,45 @@
         }
 
         input[type="text"],
-        textarea,
         input[type="number"],
-        select {
+        textarea {
             width: 100%;
-            padding: 8px 10px;
-            font-size: 14px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: white;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
             color: var(--text);
-            transition: border-color 0.2s ease;
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
+            padding: 9px 11px;
+            font-size: 14px;
         }
 
         textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
-            font-family: monospace;
+            font-family: Consolas, "Courier New", monospace;
             font-size: 13px;
         }
 
-        .help-text {
-            font-size: 12px;
-            color: var(--text-light);
-            margin-top: 4px;
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(11,95,255,0.12);
         }
 
-        /* Test Cases */
-        .test-cases-section {
+        .help {
+            margin-top: 5px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .test-card {
             grid-column: 1 / -1;
         }
 
         .test-case {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 4px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
             padding: 12px;
             margin-bottom: 12px;
         }
@@ -182,230 +300,225 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #e8edf4;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .test-case-title {
+        .test-head-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .test-title {
             font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
+            font-weight: 700;
         }
 
-        .remove-test-case {
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 8px;
-            font-size: 11px;
+        .example-inline label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
             cursor: pointer;
         }
 
-        .test-case-fields {
+        .remove-btn {
+            border: none;
+            border-radius: 6px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 12px;
+            padding: 5px 9px;
+            cursor: pointer;
+        }
+
+        .test-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .example-checkbox {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px dashed var(--border);
-        }
-
-        .example-checkbox label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 500;
-            margin: 0;
-            cursor: pointer;
-        }
-
-        /* Form Actions */
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
+            gap: 10px;
         }
 
         .btn {
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 4px;
             border: none;
+            border-radius: 9px;
+            padding: 9px 14px;
+            font-size: 13px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--text);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: #f9fafb;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #15803d;
-        }
-
-        .btn-add {
-            background: white;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            display: flex;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            margin-top: 8px;
         }
 
-        .btn-add:hover {
-            background: var(--primary);
-            color: white;
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-add { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-add:hover { background: var(--primary); color: #fff; }
+
+        .actions {
+            margin-top: 16px;
+            border-top: 1px solid var(--line);
+            padding-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Time Limit Options */
-        .time-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        .actions-right {
+            display: flex;
             gap: 8px;
-            margin-top: 8px;
         }
 
-        .time-option {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 8px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s ease;
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .test-grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; align-items: stretch; }
+            .actions-right { justify-content: flex-end; }
+        }
+    
+        /* admin-cute-polish */
+        body {
+            background:
+                radial-gradient(circle at 6% -8%, rgba(59, 130, 246, 0.12), transparent 34%),
+                radial-gradient(circle at 94% 108%, rgba(14, 165, 233, 0.1), transparent 30%),
+                var(--bg, #f4f6f8) !important;
         }
 
-        .time-option:hover,
-        .time-option.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
+        .container,
+        .shell {
+            border-radius: 16px !important;
+            border-color: #d7e2ef !important;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.09) !important;
         }
+
+        .btn,
+        .action-btn,
+        .remove-btn,
+        .remove-test-case,
+        .btn-sm {
+            border-radius: 999px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.1px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+        }
+
+        .btn:hover,
+        .action-btn:hover,
+        .remove-btn:hover,
+        .remove-test-case:hover,
+        .btn-sm:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.03);
+        }
+
+        h1 {
+            letter-spacing: 0.2px;
+        }
+
     </style>
 </head>
 <body>
-
 <div class="header">
-    <div>Admin Panel</div>
-    <div style="font-size: 14px; color: #9ca3af;">
-        <a href="/admin/dashboard" style="color: #9ca3af; text-decoration: none;">Dashboard</a>
-        | <a href="/" style="color: #9ca3af; text-decoration: none;">View Exam</a>
+    <div class="header-title"><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
+    <div class="header-nav">
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/">View Exam</a>
     </div>
 </div>
 
 <div class="page">
-    <div class="container">
-        <div class="content-header">
+    <div class="shell">
+        <div class="hero">
             <div class="breadcrumb">
-                <a href="/admin/questions"> Manage Questions</a>
+                <a href="/admin/dashboard">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <span class="separator">/</span>
+                <span>Add Question</span>
             </div>
             <h1>Create New Question</h1>
+            <p>Add problem details, set time limit, and configure grading test cases.</p>
         </div>
 
-        <div class="form-content">
+        <div class="form-wrap">
             <form method="POST" id="questionForm">
-                <div class="form-grid">
-                    <!-- Basic Information -->
-                    <div class="form-section">
-                        <h2>Basic Information</h2>
-                        
-                        <div class="form-group">
-                            <label for="title" class="required">Question Title</label>
-                            <input type="text" id="title" name="title" required 
-                                   placeholder="e.g., Sum of Two Numbers">
-                            <div class="help-text">Short descriptive title</div>
+                <div class="layout">
+                    <div class="card test-card">
+                        <div class="tab-shell">
+                            <div class="tab-nav">
+                                <div class="tab-indicator" id="adminTabIndicator"></div>
+                                <button type="button" class="tab-btn active" data-tab-target="tab-setup">Question Setup</button>
+                                <button type="button" class="tab-btn" data-tab-target="tab-tests">Test Cases</button>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="description" class="required">Description</label>
-                            <textarea id="description" name="description" required 
-                                      placeholder="Problem statement, input/output format, constraints..."></textarea>
-                            <div class="help-text">Markdown supported</div>
+                        <div class="tab-content">
+                        <div id="tab-setup" class="tab-panel active">
+                            <div class="layout">
+                                <div class="card">
+                                    <h2>Question Details</h2>
+
+                                    <div class="group">
+                                        <label for="title" class="required">Question Title</label>
+                                        <input type="text" id="title" name="title" required placeholder="e.g., Sum of Two Numbers">
+                                        <div class="help">Short, descriptive title.</div>
+                                    </div>
+
+                                    <div class="group">
+                                        <label for="description" class="required">Description</label>
+                                        <textarea id="description" name="description" required placeholder="Problem statement, constraints, and I/O format..."></textarea>
+                                        <div class="help">Markdown supported.</div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <h2>Scoring & Timing</h2>
+
+                                    <div class="group">
+                                        <label for="marks" class="required">Marks</label>
+                                        <input type="number" id="marks" name="marks" required value="10" min="1" max="100">
+                                        <div class="help">Points awarded for this question.</div>
+                                    </div>
+
+                                    <div class="group">
+                                        <label for="time_limit" class="required">Time Limit (minutes)</label>
+                                        <input type="number" id="time_limit" name="time_limit" required value="30" min="1" max="180">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="marks" class="required">Marks</label>
-                            <input type="number" id="marks" name="marks" required 
-                                   value="10" min="1" max="100">
-                            <div class="help-text">Points for this question</div>
-                        </div>
-                    </div>
+                        <div id="tab-tests" class="tab-panel">
+                            <div class="card">
+                                <h2>Test Cases</h2>
 
-                    <!-- Time Limit -->
-                    <div class="form-section">
-                        <h2>Time Limit</h2>
-                        
-                        <div class="form-group">
-                            <label for="time_limit" class="required">Time (minutes)</label>
-                            <input type="number" id="time_limit" name="time_limit" required 
-                                   value="30" min="1" max="180">
-                            <div class="help-text">Time allowed for this question</div>
-                        </div>
+                                <div id="testCasesContainer"></div>
 
-                        <div class="help-text">Quick select:</div>
-                        <div class="time-options">
-                            <div class="time-option" data-minutes="5">5 min</div>
-                            <div class="time-option" data-minutes="15">15 min</div>
-                            <div class="time-option" data-minutes="30">30 min</div>
-                            <div class="time-option" data-minutes="45">45 min</div>
-                            <div class="time-option" data-minutes="60">60 min</div>
-                            <div class="time-option" data-minutes="90">90 min</div>
+                                <button type="button" class="btn btn-add" onclick="addTestCase()">+ Add Test Case</button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Test Cases -->
-                    <div class="form-section test-cases-section">
-                        <h2>Test Cases</h2>
-                        
-                        <div id="testCasesContainer">
-                            <!-- Test cases will be added here -->
                         </div>
-
-                        <button type="button" class="btn btn-add" onclick="addTestCase()">
-                            + Add Test Case
-                        </button>
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <a href="/admin/questions" class="btn btn-secondary">Cancel</a>
-                    <div class="action-buttons">
+                <div class="actions">
+                    <a href="/admin/dashboard" class="btn btn-secondary">Cancel</a>
+                    <div class="actions-right">
                         <button type="reset" class="btn btn-secondary">Reset</button>
                         <button type="submit" class="btn btn-success">Create Question</button>
                     </div>
@@ -421,99 +534,114 @@
     function addTestCase(input = "", output = "", isExample = false) {
         testCaseCount++;
         const container = document.getElementById('testCasesContainer');
-        
+
         const testCaseDiv = document.createElement('div');
         testCaseDiv.className = 'test-case';
         testCaseDiv.id = `testCase-${testCaseCount}`;
-        
+
         testCaseDiv.innerHTML = `
             <div class="test-case-header">
-                <div class="test-case-title">Test Case ${testCaseCount}</div>
+                <div class="test-head-left">
+                    <div class="test-title">Test Case ${testCaseCount}</div>
+                    <div class="example-inline">
+                        <label>
+                            <input type="checkbox" name="is_example[]" value="${testCaseCount - 1}" ${isExample ? 'checked' : ''}>
+                            Show as example to users
+                        </label>
+                    </div>
+                </div>
                 ${testCaseCount > 1 ? `
-                    <button type="button" class="remove-test-case" onclick="removeTestCase(${testCaseCount})">
-                        Remove
-                    </button>
+                    <button type="button" class="remove-btn" onclick="removeTestCase(${testCaseCount})">Remove</button>
                 ` : ''}
             </div>
-            <div class="test-case-fields">
+            <div class="test-grid">
                 <div>
                     <label class="required">Input</label>
-                    <textarea name="input[]" required 
-                              placeholder="Test input">${input}</textarea>
+                    <textarea name="input[]" required placeholder="Test input">${input}</textarea>
                 </div>
                 <div>
                     <label class="required">Expected Output</label>
-                    <textarea name="output[]" required 
-                              placeholder="Expected output">${output}</textarea>
+                    <textarea name="output[]" required placeholder="Expected output">${output}</textarea>
                 </div>
             </div>
-            <div class="example-checkbox">
-                <label>
-                    <input type="checkbox" name="is_example[]" value="${testCaseCount - 1}" ${isExample ? 'checked' : ''}>
-                    Show as example to users
-                </label>
-            </div>
         `;
-        
+
         container.appendChild(testCaseDiv);
     }
 
     function removeTestCase(id) {
         const element = document.getElementById(`testCase-${id}`);
-        if (element) {
-            element.remove();
-            
-            // Renumber remaining test cases
-            const testCases = document.querySelectorAll('.test-case');
-            testCases.forEach((tc, index) => {
-                const title = tc.querySelector('.test-case-title');
-                if (title) {
-                    title.textContent = `Test Case ${index + 1}`;
-                }
-                
-                // Update the example checkbox value
-                const checkbox = tc.querySelector('input[type="checkbox"]');
-                if (checkbox) {
-                    checkbox.value = index;
-                }
-            });
-            
-            testCaseCount = testCases.length;
-        }
+        if (!element) return;
+
+        element.remove();
+
+        const testCases = document.querySelectorAll('.test-case');
+        testCases.forEach((tc, index) => {
+            const title = tc.querySelector('.test-title');
+            if (title) title.textContent = `Test Case ${index + 1}`;
+
+            const checkbox = tc.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.value = index;
+        });
+
+        testCaseCount = testCases.length;
     }
 
-    // Time limit quick select
-    document.querySelectorAll('.time-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const minutes = this.getAttribute('data-minutes');
-            document.getElementById('time_limit').value = minutes;
-            
-            // Update active state
-            document.querySelectorAll('.time-option').forEach(opt => {
-                opt.classList.remove('active');
-            });
-            this.classList.add('active');
-        });
-    });
-
-    // Add first test case on page load
     document.addEventListener('DOMContentLoaded', () => {
         addTestCase();
+
+        const indicator = document.getElementById('adminTabIndicator');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        function updateIndicator() {
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if (!activeBtn || !indicator) return;
+            indicator.style.width = `${activeBtn.offsetWidth}px`;
+            indicator.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+        }
+
+        function setTab(targetId) {
+            const currentActive = document.querySelector('.tab-panel.active');
+            const nextActive = document.getElementById(targetId);
+            if (!nextActive || currentActive === nextActive) return;
+
+            const movingRight = targetId === 'tab-tests';
+
+            tabPanels.forEach(panel => {
+                panel.classList.remove('active', 'anim-in-left', 'anim-in-right');
+            });
+
+            nextActive.classList.add('active');
+            nextActive.classList.add(movingRight ? 'anim-in-right' : 'anim-in-left');
+            setTimeout(() => nextActive.classList.remove('anim-in-left', 'anim-in-right'), 380);
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const target = button.dataset.tabTarget;
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                setTab(target);
+                updateIndicator();
+            });
+        });
+
+        updateIndicator();
+        window.addEventListener('resize', updateIndicator);
     });
 
-    // Form validation
     document.getElementById('questionForm').addEventListener('submit', function(e) {
         const testCases = document.querySelectorAll('.test-case');
         if (testCases.length === 0) {
             e.preventDefault();
             alert('Please add at least one test case.');
-            return false;
+            return;
         }
-        
-        // Validate all required fields
+
         const requiredFields = this.querySelectorAll('[required]');
         let isValid = true;
-        
+
         requiredFields.forEach(field => {
             if (!field.value.trim()) {
                 isValid = false;
@@ -522,15 +650,12 @@
                 field.style.borderColor = '';
             }
         });
-        
+
         if (!isValid) {
             e.preventDefault();
             alert('Please fill in all required fields.');
         }
-        
-        return isValid;
     });
 </script>
-
 </body>
 </html>

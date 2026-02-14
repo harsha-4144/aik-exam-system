@@ -45,37 +45,108 @@
         .user-info {
             font-size: 14px;
             color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .user-info a {
-            color: #9ca3af;
+            color: #e2ebfa;
             text-decoration: none;
-            margin-left: 8px;
+            margin-left: 0;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            background: rgba(148, 163, 184, 0.14);
+            transition: all 0.2s ease;
         }
 
         .user-info a:hover {
             color: white;
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-menu summary {
+            list-style: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(148, 163, 184, 0.16);
+            color: #e2ebfa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu summary::-webkit-details-marker { display: none; }
+        .profile-menu summary:hover {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            z-index: 20;
+        }
+
+        .user-info .profile-dropdown a {
+            display: block;
+            margin: 0;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #e2ebfa;
+        }
+
+        .user-info .profile-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.25);
+            transform: none;
         }
 
         .page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
+            max-width: 1280px;
+            margin: 16px auto 28px;
+            padding: 0 20px 24px;
         }
 
         .container {
             background: var(--panel);
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            border-radius: 18px;
+            border: 1px solid #d7e3f0;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 18px 34px rgba(15, 23, 42, 0.1);
         }
 
         .dashboard-header {
-            padding: 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 28px;
+            background: linear-gradient(135deg, #dbe8ff 0%, #c4d9ff 52%, #e6f0ff 100%);
+            color: #0f172a;
             text-align: center;
+            border-bottom: 1px solid #d7e3f0;
         }
 
         .dashboard-header h1 {
@@ -85,25 +156,40 @@
 
         .dashboard-header p {
             margin: 0;
-            opacity: 0.9;
+            color: #4b5563;
             font-size: 16px;
         }
 
         .dashboard-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 24px;
-            background: #f9fafb;
-            border-bottom: 1px solid var(--border);
+            gap: 16px;
+            padding: 20px 24px;
+            background: #f8fbff;
+            border-bottom: 1px solid #d7e3f0;
         }
 
         .stat-card {
-            background: white;
-            border-radius: 8px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border-radius: 14px;
             padding: 20px;
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #d8e5f5;
+            box-shadow: 0 10px 18px rgba(37, 99, 235, 0.08);
+        }
+
+        .stat-card:nth-child(2) {
+            background: linear-gradient(180deg, #ffffff 0%, #f4fff7 100%);
+            border-color: #cce8d4;
+        }
+
+        .stat-card:nth-child(3) {
+            background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
+            border-color: #f2dfbe;
+        }
+
+        .stat-card:nth-child(4) {
+            background: linear-gradient(180deg, #ffffff 0%, #f6f7ff 100%);
+            border-color: #d8defa;
         }
 
         .stat-card h3 {
@@ -137,7 +223,7 @@
         }
 
         .dashboard-content {
-            padding: 32px;
+            padding: 24px;
         }
 
         .section {
@@ -152,9 +238,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 2px solid var(--border);
+            border-bottom: 1px solid #d7e3f0;
         }
 
         .section-header h2 {
@@ -171,15 +257,16 @@
         }
 
         .action-card {
-            background: #f9fafb;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #d7e3f0;
+            border-radius: 12px;
             padding: 20px;
             transition: all 0.2s ease;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
             display: block;
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
         }
 
         .action-card:hover {
@@ -206,22 +293,30 @@
         }
 
         .icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--primary);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.25);
+            flex-shrink: 0;
+        }
+
+        .icon svg {
+            width: 14px;
+            height: 14px;
+            display: block;
         }
 
         .recent-questions {
             background: white;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border: 1px solid #d7e3f0;
+            border-radius: 14px;
             overflow: hidden;
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
         }
 
         .exam-grid {
@@ -313,9 +408,9 @@
         }
 
         .table-header {
-            background: #f9fafb;
+            background: #f7fbff;
             padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #d7e3f0;
             font-weight: 600;
             color: var(--muted);
             font-size: 14px;
@@ -328,7 +423,7 @@
 
         .question-item {
             padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #d7e3f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -362,10 +457,10 @@
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             font-size: 13px;
-            font-weight: 600;
-            border-radius: 4px;
+            font-weight: 700;
+            border-radius: 999px;
             border: none;
             cursor: pointer;
             text-decoration: none;
@@ -376,17 +471,18 @@
         }
 
         .btn-sm {
-            padding: 4px 8px;
+            padding: 7px 12px;
             font-size: 12px;
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
+            box-shadow: 0 8px 14px rgba(37, 99, 235, 0.24);
         }
 
         .btn-primary:hover {
-            background: var(--primary-hover);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
 
         .btn-secondary {
@@ -416,8 +512,8 @@
 
         .footer {
             padding: 20px 24px;
-            border-top: 1px solid var(--border);
-            background: #f9fafb;
+            border-top: 1px solid #d7e3f0;
+            background: #f8fbff;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -455,16 +551,65 @@
                 justify-content: flex-start;
             }
         }
+    
+        /* admin-cute-polish */
+        body {
+            background:
+                radial-gradient(circle at 6% -8%, rgba(59, 130, 246, 0.12), transparent 34%),
+                radial-gradient(circle at 94% 108%, rgba(14, 165, 233, 0.1), transparent 30%),
+                var(--bg, #f4f6f8) !important;
+        }
+
+        .container,
+        .shell {
+            border-radius: 16px !important;
+            border-color: #d7e2ef !important;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.09) !important;
+        }
+
+        .btn,
+        .action-btn,
+        .remove-btn,
+        .remove-test-case,
+        .btn-sm {
+            border-radius: 999px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.1px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+        }
+
+        .btn:hover,
+        .action-btn:hover,
+        .remove-btn:hover,
+        .remove-test-case:hover,
+        .btn-sm:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.03);
+        }
+
+        h1 {
+            letter-spacing: 0.2px;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div>Admin Dashboard</div>
+    <div><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
     <div class="user-info">
         Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
         <a href="/admin/exam-center">View Exam</a>
-        <a href="/logout">Logout</a>
+        <details class="profile-menu">
+            <summary aria-label="Profile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-2.761 0-5 1.79-5 4v1h10v-1c0-2.21-2.239-4-5-4z"/>
+                </svg>
+            </summary>
+            <div class="profile-dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </details>
     </div>
 </div>
 
@@ -532,26 +677,57 @@
             <div class="section">
                 <div class="section-header">
                     <h2>Quick Actions</h2>
+                    <a href="/?preview=1" class="btn btn-primary btn-sm">Practice Mode</a>
                 </div>
                 <div class="quick-actions">
                     <a href="/admin" class="action-card">
-                        <h3><span class="icon">+</span> Create New Question</h3>
+                        <h3>
+                            <span class="icon" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 2.5a.5.5 0 0 1 .5.5v4h4a.5.5 0 0 1 0 1h-4v4a.5.5 0 0 1-1 0v-4h-4a.5.5 0 0 1 0-1h4v-4a.5.5 0 0 1 .5-.5z"/>
+                                </svg>
+                            </span>
+                            Create New Question
+                        </h3>
                         <p>Add a new coding challenge with test cases and time limit</p>
                     </a>
 
                     <a href="/admin/questions" class="action-card">
-                        <h3><span class="icon">??</span> Manage Questions</h3>
+                        <h3>
+                            <span class="icon" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M1.75 2.5A1.75 1.75 0 0 1 3.5.75h9A1.75 1.75 0 0 1 14.25 2.5v11A1.75 1.75 0 0 1 12.5 15h-9A1.75 1.75 0 0 1 1.75 13.5v-11zm1.5.25v10.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25h-9a.25.25 0 0 0-.25.25z"/>
+                                    <path d="M5 5.25h6a.75.75 0 0 0 0-1.5H5a.75.75 0 0 0 0 1.5zm0 3h6a.75.75 0 0 0 0-1.5H5a.75.75 0 0 0 0 1.5zm0 3h4a.75.75 0 0 0 0-1.5H5a.75.75 0 0 0 0 1.5z"/>
+                                </svg>
+                            </span>
+                            Manage Questions
+                        </h3>
                         <p>View, edit, or delete existing questions and test cases</p>
                     </a>
 
                     <a href="/admin/users" class="action-card">
-                        <h3><span class="icon">??</span> Manage Users</h3>
+                        <h3>
+                            <span class="icon" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-3.314 0-6 2.015-6 4.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5C14 11.015 11.314 9 8 9z"/>
+                                </svg>
+                            </span>
+                            Manage Users
+                        </h3>
                         <p>View user accounts, track progress, and manage access</p>
                     </a>
 
                     <!-- CHANGED THIS CARD - Now points to /admin/user_reports -->
                     <a href="/admin/user_reports" class="action-card">
-                        <h3><span class="icon">??</span> View User Reports</h3>
+                        <h3>
+                            <span class="icon" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 13.5 1h-11zM2.5 2.5h11v11h-11v-11z"/>
+                                    <path d="M4.5 11.5a.75.75 0 0 0 .75-.75V9.5h1.5v1.25a.75.75 0 0 0 1.5 0V7.5h1.5v3.25a.75.75 0 0 0 1.5 0V5.5h.75a.75.75 0 0 0 0-1.5h-.75A1.75 1.75 0 0 0 9.5 5.75V6h-1.5v-.25A1.75 1.75 0 0 0 6.25 4h-1.5A.75.75 0 0 0 4 4.75v6a.75.75 0 0 0 .5.75z"/>
+                                </svg>
+                            </span>
+                            View User Reports
+                        </h3>
                         <p>Detailed performance reports for individual users</p>
                     </a>
                 </div>
@@ -570,7 +746,7 @@
                             <div class="question-info">
                                 <h4>{{ q[1] }}</h4>
                                 <div class="question-meta">
-                                    <span>ID: #{{ q[0] }}</span>
+                                    <span>ID: {{ loop.index }}</span>
                                     <span>{{ q[2] }} test cases</span>
                                     <span>{{ q[3] // 60 }} min time limit</span>
                                 </div>
@@ -595,7 +771,7 @@
 
         <div class="footer">
             <div>
-                System Status: <span style="color: var(--success); font-weight: 600;">? Operational</span>
+                System Status: <span style="color: var(--success); font-weight: 600;">Operational</span>
             </div>
             <div class="last-login">
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -623,5 +799,21 @@
     }, 60000);
 </script>
 
+<script>
+// profile-menu-close
+document.addEventListener("click", function (e) {
+    document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+        if (!menu.contains(e.target)) menu.removeAttribute("open");
+    });
+});
+
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+            menu.removeAttribute("open");
+        });
+    }
+});
+</script>
 </body>
 </html>

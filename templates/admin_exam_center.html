@@ -50,15 +50,87 @@
         .user-info {
             font-size: 14px;
             color: #a8b3c7;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .user-info a {
-            color: #a8b3c7;
+            color: #e2ebfa;
             text-decoration: none;
-            margin-left: 12px;
+            margin-left: 0;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            background: rgba(148, 163, 184, 0.14);
+            transition: all 0.2s ease;
         }
 
-        .user-info a:hover { color: #ffffff; }
+        .user-info a:hover {
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-menu summary {
+            list-style: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(148, 163, 184, 0.16);
+            color: #e2ebfa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu summary::-webkit-details-marker { display: none; }
+        .profile-menu summary:hover {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            z-index: 20;
+        }
+
+        .user-info .profile-dropdown a {
+            display: block;
+            margin: 0;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #e2ebfa;
+        }
+
+        .user-info .profile-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.25);
+            transform: none;
+        }
 
         .page {
             max-width: 1240px;
@@ -242,23 +314,50 @@
 
         .tab-content {
             position: relative;
-        }
-
-        .tab-panel {
-            opacity: 0;
-            transform: translateY(12px);
-            transition: opacity 260ms ease, transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
-            pointer-events: none;
-            height: 0;
             overflow: hidden;
         }
 
+        .tab-panel {
+            display: none;
+            opacity: 0;
+            transform: translateX(0);
+            will-change: transform, opacity;
+        }
+
         .tab-panel.active {
+            display: block;
             opacity: 1;
-            transform: translateY(0);
             pointer-events: auto;
-            height: auto;
-            overflow: visible;
+        }
+
+        .tab-panel.anim-in-right {
+            animation: panelInFromRight 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        .tab-panel.anim-in-left {
+            animation: panelInFromLeft 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        @keyframes panelInFromRight {
+            0% {
+                opacity: 0;
+                transform: translateX(22px) translateY(3px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0) translateY(0);
+            }
+        }
+
+        @keyframes panelInFromLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-22px) translateY(3px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0) translateY(0);
+            }
         }
 
         .card {
@@ -354,6 +453,153 @@
             color: #1e293b;
         }
 
+        /* Apply special alignment only in main Exam Scheduling list */
+        #exam-scheduling .question-item {
+            display: grid;
+            grid-template-columns: 18px 1fr;
+            align-items: start;
+        }
+
+        #exam-scheduling .question-item input[type="checkbox"] {
+            margin-top: 2px;
+        }
+
+        #exam-scheduling .question-text {
+            line-height: 1.35;
+        }
+
+        .schedule-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .schedule-col {
+            background: #ffffff;
+            border: 1px solid #dce6f5;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .schedule-col h4 {
+            font-size: 13px;
+            color: #334155;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .schedule-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .hidden-section {
+            display: none !important;
+        }
+
+        .schedule-top-actions {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px;
+            border: 1px solid #d7e2f2;
+            background: #eaf0fa;
+            border-radius: 999px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .schedule-mode-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 8px 16px rgba(11, 95, 255, 0.16);
+            transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1), width 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            z-index: 0;
+        }
+
+        .schedule-mode-tab {
+            position: relative;
+            z-index: 1;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #4d5f7a;
+            background: transparent;
+            cursor: pointer;
+            transition: color 200ms ease, transform 200ms ease;
+        }
+
+        .schedule-mode-tab:hover {
+            color: #1f3a63;
+            transform: translateY(-1px);
+        }
+
+        .schedule-mode-tab.active {
+            color: #0b3f9f;
+        }
+
+        .session-list {
+            display: none;
+            border: 1px solid #dce6f5;
+            border-radius: 12px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .session-list.show {
+            display: block;
+        }
+
+        .session-list table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .session-list th,
+        .session-list td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5edf8;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .session-list th {
+            background: #f3f7ff;
+            color: #334155;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status-pill.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pill.inactive {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
         .btn {
             border: none;
             border-radius: 9px;
@@ -375,6 +621,14 @@
         .btn-warning { background: var(--warning); color: #111827; }
         .btn-danger { background: var(--danger); color: #fff; }
         .btn-danger:hover { background: #b91c1c; }
+        .btn:disabled,
+        .btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(0.25);
+            pointer-events: none;
+            box-shadow: none;
+        }
 
         .monitor-grid {
             display: grid;
@@ -428,28 +682,20 @@
             margin-bottom: 12px;
         }
 
-        .monitor-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .monitor-toolbar-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: auto;
-        }
-
         .monitor-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
             margin-bottom: 6px;
+        }
+
+        .monitor-head-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
         }
 
         .monitor-badge {
@@ -463,14 +709,85 @@
         }
 
         .monitor-note {
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 600;
             color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .session-hover-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .session-chip {
+            border: 1px solid #c9d7ee;
+            background: #eef4ff;
+            color: #19418f;
+            border-radius: 9px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: default;
+            white-space: nowrap;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .session-tooltip {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 280px;
+            background: #ffffff;
+            border: 1px solid #d7e2f2;
+            border-radius: 12px;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+            padding: 12px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: opacity 180ms ease, transform 200ms ease, visibility 200ms ease;
+            z-index: 20;
+        }
+
+        .session-hover-wrap:hover .session-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .tooltip-title {
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .tooltip-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 10px;
+            font-size: 12px;
+        }
+
+        .tooltip-key {
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .tooltip-val {
+            color: #0f172a;
+            font-weight: 600;
         }
 
         .scheduled-highlight {
             margin: 8px 0 12px;
             display: inline-flex;
             align-items: center;
+            gap: 8px;
             padding: 6px 10px;
             border-radius: 999px;
             border: 1px solid #f5d48a;
@@ -480,13 +797,64 @@
             font-weight: 700;
         }
 
+        .scheduled-highlight.live-only {
+            border-color: #86efac;
+            background: #ecfdf3;
+            color: #166534;
+        }
+
+        .session-live-state {
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            border: none;
+        }
+
+        .session-live-state.live {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .session-live-state.not-live {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .session-live-state.paused {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .live-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #16a34a;
+            margin-right: 6px;
+            vertical-align: middle;
+            opacity: 0;
+        }
+
+        .live-dot.blink {
+            opacity: 1;
+            animation: livePulse 1s infinite ease-in-out;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.25; }
+        }
+
         .monitor-time {
             border: 1px solid #d6e1f2;
             background: #ffffff;
             color: #0f172a;
             border-radius: 999px;
-            padding: 5px 10px;
-            font-size: 12px;
+            padding: 6px 12px;
+            font-size: 16px;
             font-weight: 700;
         }
 
@@ -501,6 +869,82 @@
             width: 120px;
         }
 
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 15, 30, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(3px);
+        }
+
+        .confirm-overlay.show {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            width: min(460px, calc(100vw - 24px));
+            background: #ffffff;
+            border: 1px solid #d7e2f2;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+            padding: 18px;
+            animation: popIn 180ms ease;
+        }
+
+        .confirm-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .confirm-body {
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .edit-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 15, 30, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(3px);
+        }
+
+        .edit-overlay.show {
+            display: flex;
+        }
+
+        .edit-dialog {
+            width: min(900px, calc(100vw - 28px));
+            max-height: calc(100vh - 40px);
+            overflow: auto;
+            background: #ffffff;
+            border: 1px solid #d7e2f2;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+            padding: 18px;
+            animation: popIn 180ms ease;
+        }
+
+        @keyframes popIn {
+            from { transform: translateY(8px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
         @media (max-width: 980px) {
             .motion-tabs {
                 display: flex;
@@ -508,6 +952,20 @@
             }
 
             .motion-tab {
+                flex: 1;
+                text-align: center;
+            }
+
+            .schedule-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-top-actions {
+                display: flex;
+                width: 100%;
+            }
+
+            .schedule-mode-tab {
                 flex: 1;
                 text-align: center;
             }
@@ -528,15 +986,64 @@
                 grid-template-columns: 1fr;
             }
         }
+    
+        /* admin-cute-polish */
+        body {
+            background:
+                radial-gradient(circle at 6% -8%, rgba(59, 130, 246, 0.12), transparent 34%),
+                radial-gradient(circle at 94% 108%, rgba(14, 165, 233, 0.1), transparent 30%),
+                var(--bg, #f4f6f8) !important;
+        }
+
+        .container,
+        .shell {
+            border-radius: 16px !important;
+            border-color: #d7e2ef !important;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.09) !important;
+        }
+
+        .btn,
+        .action-btn,
+        .remove-btn,
+        .remove-test-case,
+        .btn-sm {
+            border-radius: 999px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.1px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+        }
+
+        .btn:hover,
+        .action-btn:hover,
+        .remove-btn:hover,
+        .remove-test-case:hover,
+        .btn-sm:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.03);
+        }
+
+        h1 {
+            letter-spacing: 0.2px;
+        }
+
     </style>
 </head>
 <body>
 <div class="header">
-    <div class="header-title">Exam Controls</div>
+    <div class="header-title"><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
     <div class="user-info">
         Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
         <a href="/admin/dashboard">Dashboard</a>
-        <a href="/logout">Logout</a>
+        <details class="profile-menu">
+            <summary aria-label="Profile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-2.761 0-5 1.79-5 4v1h10v-1c0-2.21-2.239-4-5-4z"/>
+                </svg>
+            </summary>
+            <div class="profile-dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </details>
     </div>
 </div>
 
@@ -588,72 +1095,170 @@
                             <div class="subtext">Set the session timing and pick questions to include.</div>
 
                             <form method="POST" action="/admin/create-session" id="scheduleForm">
-                                <div class="form-row">
-                                    <label>Session Name</label>
-                                    <input type="text" name="session_name" value="Batch Exam" required>
+                                <input type="hidden" name="session_id" id="sessionIdField" value="">
+                                <div class="schedule-top-actions">
+                                    <span class="schedule-mode-indicator" id="scheduleModeIndicator"></span>
+                                    <button class="schedule-mode-tab active" type="button" id="newSessionBtn">New Session</button>
+                                    <button class="schedule-mode-tab" type="button" id="showSessionsBtn">Show Existing Sessions</button>
                                 </div>
 
-                                <div class="datetime-row">
-                                    <div class="form-row">
-                                        <label>Start Date</label>
-                                        <input type="date" id="startDate" required>
+                                <div class="session-list" id="sessionListBox">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Start</th>
+                                                <th>Duration</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for s in existing_sessions %}
+                                            <tr>
+                                                <td>{{ s.session_name }}</td>
+                                                <td>{{ s.start_time }}</td>
+                                                <td>{{ s.duration_minutes }} min</td>
+                                                <td>
+                                                    <span class="status-pill {{ 'active' if s.is_active else 'inactive' }}">
+                                                        {{ 'Active' if s.is_active else 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary edit-session-btn"
+                                                        data-session-id="{{ s.id }}"
+                                                        data-session-name="{{ s.session_name }}"
+                                                        data-start-iso="{{ s.start_time.isoformat() if s.start_time else '' }}"
+                                                        data-duration="{{ s.duration_minutes }}"
+                                                        data-question-ids="{{ s.question_ids or '' }}"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-danger delete-session-btn"
+                                                        data-session-id="{{ s.id }}"
+                                                        style="margin-left:6px;"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% if not existing_sessions %}
+                                            <tr>
+                                                <td colspan="5" style="color:#64748b;">No sessions available yet.</td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="schedule-layout" id="scheduleEditorWrap">
+                                    <div class="schedule-col">
+                                        <h4>Session Setup</h4>
+                                        <div class="form-row">
+                                            <label>Session Name</label>
+                                            <input type="text" name="session_name" value="Batch Exam" required>
+                                        </div>
+
+                                        <div class="datetime-row">
+                                            <div class="form-row">
+                                                <label>Start Date</label>
+                                                <input type="date" id="startDate" required>
+                                            </div>
+                                            <div class="form-row">
+                                                <label>Start Time</label>
+                                                <input type="time" id="startTime" required>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="start_time" id="startDateTime">
+                                        <div class="hint">Use local date/time. Exam begins exactly at this time unless force-started.</div>
+
+                                        <div class="form-row" style="margin-top:10px;">
+                                            <label>Duration (minutes)</label>
+                                            <input type="number" name="duration_minutes" min="1" value="60" required>
+                                            <div class="hint">Defines exam length and end time window.</div>
+                                        </div>
                                     </div>
-                                    <div class="form-row">
-                                        <label>Start Time</label>
-                                        <input type="time" id="startTime" required>
+
+                                    <div class="schedule-col">
+                                        <h4>Question Selection</h4>
+                                        <div class="form-row">
+                                            <label>Questions Included</label>
+                                            <div class="question-list">
+                                                {% for q in all_questions %}
+                                                <label class="question-item">
+                                                    <input type="checkbox" name="question_ids" value="{{ q[0] }}">
+                                                    <span class="question-text">{{ q[1] }}</span>
+                                                </label>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="hint">Select at least one question.</div>
+                                        </div>
+
+                                        <div class="schedule-actions">
+                                            <button class="btn btn-primary" type="submit" id="scheduleSubmitBtn">Schedule Exam</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <input type="hidden" name="start_time" id="startDateTime">
-                                <div class="hint">Use local date/time. Exam begins exactly at this time unless force-started.</div>
-
-                                <div class="form-row">
-                                    <label>Duration (minutes)</label>
-                                    <input type="number" name="duration_minutes" min="1" value="60" required>
-                                    <div class="hint">Defines exam length and end time window.</div>
-                                </div>
-
-                                <div class="form-row">
-                                    <label>Questions Included</label>
-                                    <div class="question-list">
-                                        {% for q in all_questions %}
-                                        <label class="question-item">
-                                            <input type="checkbox" name="question_ids" value="{{ q[0] }}">
-                                            <span class="question-text">#{{ q[0] }} - {{ q[1] }}</span>
-                                        </label>
-                                        {% endfor %}
-                                    </div>
-                                    <div class="hint">Select at least one question.</div>
-                                </div>
-
-                                <button class="btn btn-primary" type="submit">Schedule Exam</button>
                             </form>
                         </div>
                     </section>
 
                     <section class="tab-panel" id="panelMonitor">
                         <div class="card" id="live-monitor">
-                            <div class="monitor-head">
-                                <h3 style="margin:0;">Live Exam Monitor</h3>
-                                <div style="display:flex;gap:8px;align-items:center;">
-                                    <form method="POST" action="/admin/exam-controls" id="stopSessionForm">
-                                        <input type="hidden" name="action" value="stop_session">
-                                        <button class="btn btn-warning" type="submit">Stop Session</button>
+                <div class="monitor-head">
+                    <h3 style="margin:0;">Live Exam Monitor</h3>
+                    <div class="monitor-head-actions">
+                        <span class="monitor-note" id="monitorLastUpdated">Auto refresh every 5s</span>
+                        <form method="POST" action="/admin/exam-controls" id="stopSessionForm">
+                            <input type="hidden" name="action" value="stop_session">
+                            <button class="btn btn-warning" type="submit" id="stopSessionBtn">Stop Session</button>
                                     </form>
                                     <form method="POST" action="/admin/exam-controls" id="forceStartForm">
                                         <input type="hidden" name="action" value="force_start">
-                                        <button class="btn btn-danger" type="submit">Force Start Now</button>
+                                        <button class="btn btn-danger" type="submit" id="forceStartBtn">Force Start Now</button>
                                     </form>
                                 </div>
-                            </div>
-                            <div class="subtext">Real-time readiness and progression overview.</div>
-                            <div class="scheduled-highlight" id="monitorScheduledAt">Scheduled: --</div>
-                            <div class="monitor-toolbar">
-                                <span class="monitor-badge">Live Snapshot</span>
-                                <div class="monitor-toolbar-right">
-                                    <span class="monitor-time" id="monitorTimeLeft">--:--:--</span>
-                                    <span class="monitor-note" id="monitorLastUpdated">Auto refresh every 5s</span>
-                                </div>
-                            </div>
+                </div>
+                <div class="subtext">Real-time readiness and progression overview.</div>
+                <div class="session-hover-wrap" style="margin-bottom:8px;">
+                    <span class="session-chip" id="sessionChipName">
+                        {{ active_exam.session_name if active_exam else 'No Active Session' }}
+                    </span>
+                    <div class="session-tooltip">
+                        <div class="tooltip-title">Session Details</div>
+                        <div class="tooltip-grid">
+                            <span class="tooltip-key">Name</span>
+                            <span class="tooltip-val" id="tipSessionName">{{ active_exam.session_name if active_exam else '--' }}</span>
+                            <span class="tooltip-key">Duration</span>
+                            <span class="tooltip-val" id="tipDuration">{{ active_exam.duration_minutes if active_exam else '--' }} min</span>
+                            <span class="tooltip-key">Scheduled</span>
+                            <span class="tooltip-val" id="tipScheduled">{{ active_exam.start_time if active_exam else '--' }}</span>
+                            <span class="tooltip-key">End</span>
+                            <span class="tooltip-val" id="tipEnd">{{ active_exam.end_time if active_exam else '--' }}</span>
+                            <span class="tooltip-key">Status</span>
+                            <span class="tooltip-val" id="tipStatus">
+                                {% if active_exam %}
+                                    {% if exam_paused %}Paused{% elif exam_started %}Running{% else %}Scheduled{% endif %}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scheduled-highlight" id="monitorScheduledAt">
+                    <span id="monitorScheduledText">Scheduled: --</span>
+                    <span class="session-live-state not-live" id="monitorLiveState">
+                        <span class="live-dot" id="monitorLiveDot"></span>
+                        <span id="monitorLiveLabel">NOT LIVE</span>
+                    </span>
+                    <span class="monitor-time" id="monitorTimeLeft">--:--:--</span>
+                </div>
 
                             <div class="monitor-grid">
                                 <div class="metric ready">
@@ -672,14 +1277,73 @@
 
                             <form method="POST" action="/admin/exam-controls" class="add-time-form" id="addTimeForm">
                                 <input type="hidden" name="action" value="add_time">
-                                <input type="number" name="minutes" min="1" value="10">
-                                <button class="btn btn-primary" type="submit">Add Time (minutes)</button>
+                                <input type="number" name="minutes" min="1" value="10" id="addTimeMinutesInput">
+                                <button class="btn btn-primary" type="submit" id="addTimeBtn">Add Time (minutes)</button>
                             </form>
                         </div>
                     </section>
             </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay" aria-hidden="true">
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="confirm-title" id="confirmTitle">Confirm Action</div>
+        <div class="confirm-body" id="confirmBody">Are you sure you want to continue?</div>
+        <div class="confirm-actions">
+            <button class="btn btn-secondary" id="confirmCancelBtn" type="button">Cancel</button>
+            <button class="btn btn-primary" id="confirmOkBtn" type="button">Yes, Continue</button>
+        </div>
+    </div>
+</div>
+
+<div class="edit-overlay" id="editOverlay" aria-hidden="true">
+    <div class="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editDialogTitle">
+        <h3 id="editDialogTitle" style="margin-bottom:10px;">Edit Session</h3>
+        <form id="editSessionForm">
+            <input type="hidden" name="session_id" id="editSessionId">
+            <div class="schedule-layout">
+                <div class="schedule-col">
+                    <h4>Session Setup</h4>
+                    <div class="form-row">
+                        <label>Session Name</label>
+                        <input type="text" name="session_name" id="editSessionName" required>
+                    </div>
+                    <div class="datetime-row">
+                        <div class="form-row">
+                            <label>Start Date</label>
+                            <input type="date" id="editStartDate" required>
+                        </div>
+                        <div class="form-row">
+                            <label>Start Time</label>
+                            <input type="time" id="editStartTime" required>
+                        </div>
+                    </div>
+                    <input type="hidden" name="start_time" id="editStartDateTime">
+                    <div class="form-row" style="margin-top:10px;">
+                        <label>Duration (minutes)</label>
+                        <input type="number" name="duration_minutes" id="editDuration" min="1" required>
+                    </div>
+                </div>
+                <div class="schedule-col">
+                    <h4>Question Selection</h4>
+                    <div class="question-list" id="editQuestionList">
+                        {% for q in all_questions %}
+                        <label class="question-item">
+                            <input type="checkbox" name="question_ids" value="{{ q[0] }}">
+                            <span class="question-text">{{ q[1] }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="confirm-actions" style="margin-top:14px;">
+                <button class="btn btn-secondary" type="button" id="editCancelBtn">Cancel</button>
+                <button class="btn btn-primary" type="submit">Save Changes</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -704,6 +1368,25 @@
     const startDate = document.getElementById("startDate");
     const startTime = document.getElementById("startTime");
     const hiddenDateTime = document.getElementById("startDateTime");
+    const sessionIdField = document.getElementById("sessionIdField");
+    const scheduleSubmitBtn = document.getElementById("scheduleSubmitBtn");
+    const newSessionBtn = document.getElementById("newSessionBtn");
+    const showSessionsBtn = document.getElementById("showSessionsBtn");
+    const scheduleModeIndicator = document.getElementById("scheduleModeIndicator");
+    const sessionListBox = document.getElementById("sessionListBox");
+    const scheduleEditorWrap = document.getElementById("scheduleEditorWrap");
+    const editSessionBtns = document.querySelectorAll(".edit-session-btn");
+    const deleteSessionBtns = document.querySelectorAll(".delete-session-btn");
+    const editOverlay = document.getElementById("editOverlay");
+    const editSessionForm = document.getElementById("editSessionForm");
+    const editSessionId = document.getElementById("editSessionId");
+    const editSessionName = document.getElementById("editSessionName");
+    const editStartDate = document.getElementById("editStartDate");
+    const editStartTime = document.getElementById("editStartTime");
+    const editStartDateTime = document.getElementById("editStartDateTime");
+    const editDuration = document.getElementById("editDuration");
+    const editQuestionList = document.getElementById("editQuestionList");
+    const editCancelBtn = document.getElementById("editCancelBtn");
     const switchForm = document.querySelector(".switch-form");
     const hiddenField = switchForm ? switchForm.querySelector('input[name="hidden"]') : null;
     const switchTrack = document.getElementById("switchTrack");
@@ -717,14 +1400,65 @@
     const forceStartForm = document.getElementById("forceStartForm");
     const stopSessionForm = document.getElementById("stopSessionForm");
     const addTimeForm = document.getElementById("addTimeForm");
+    const stopSessionBtn = document.getElementById("stopSessionBtn");
+    const forceStartBtn = document.getElementById("forceStartBtn");
+    const addTimeBtn = document.getElementById("addTimeBtn");
+    const addTimeMinutesInput = document.getElementById("addTimeMinutesInput");
     const monitorReady = document.getElementById("monitorReady");
     const monitorProgress = document.getElementById("monitorProgress");
     const monitorCompleted = document.getElementById("monitorCompleted");
     const monitorLastUpdated = document.getElementById("monitorLastUpdated");
     const monitorTimeLeft = document.getElementById("monitorTimeLeft");
     const monitorScheduledAt = document.getElementById("monitorScheduledAt");
+    const monitorScheduledText = document.getElementById("monitorScheduledText");
+    const monitorLiveState = document.getElementById("monitorLiveState");
+    const monitorLiveDot = document.getElementById("monitorLiveDot");
+    const monitorLiveLabel = document.getElementById("monitorLiveLabel");
+    const sessionChipName = document.getElementById("sessionChipName");
+    const tipSessionName = document.getElementById("tipSessionName");
+    const tipDuration = document.getElementById("tipDuration");
+    const tipScheduled = document.getElementById("tipScheduled");
+    const tipEnd = document.getElementById("tipEnd");
+    const tipStatus = document.getElementById("tipStatus");
+    const confirmOverlay = document.getElementById("confirmOverlay");
+    const confirmTitle = document.getElementById("confirmTitle");
+    const confirmBody = document.getElementById("confirmBody");
+    const confirmOkBtn = document.getElementById("confirmOkBtn");
+    const confirmCancelBtn = document.getElementById("confirmCancelBtn");
     let localRemainingSeconds = null;
     let isTimerRunning = false;
+    let currentPanelState = null;
+    let currentScheduleMode = "new";
+    let monitorSessionState = { hasSession: false, started: false, paused: false };
+
+    function syncMonitorActionButtons() {
+        const hasSession = Boolean(monitorSessionState.hasSession);
+        const isLive = Boolean(hasSession && monitorSessionState.started && !monitorSessionState.paused);
+        const canForceStart = Boolean(hasSession && !monitorSessionState.started);
+        const canAddTime = hasSession;
+
+        if (stopSessionBtn) {
+            stopSessionBtn.disabled = !isLive;
+            stopSessionBtn.title = isLive
+                ? "Stop the currently live session"
+                : "Stop Session is available only when a session is LIVE";
+        }
+        if (forceStartBtn) {
+            forceStartBtn.disabled = !canForceStart;
+            forceStartBtn.title = canForceStart
+                ? "Force start the scheduled session now"
+                : hasSession
+                    ? "Force Start is unavailable after session is live"
+                    : "No active session to force start";
+        }
+        if (addTimeBtn) {
+            addTimeBtn.disabled = !canAddTime;
+            addTimeBtn.title = canAddTime ? "Add extra minutes to active session" : "No active session";
+        }
+        if (addTimeMinutesInput) {
+            addTimeMinutesInput.disabled = !canAddTime;
+        }
+    }
 
     function updateTabIndicator() {
         if (!tabIndicator || !tabSchedule || !tabMonitor) return;
@@ -733,16 +1467,40 @@
         tabIndicator.style.transform = `translateX(${activeBtn.offsetLeft - 4}px)`;
     }
 
+    function updateScheduleModeIndicator() {
+        if (!scheduleModeIndicator || !newSessionBtn || !showSessionsBtn) return;
+        const activeBtn = currentScheduleMode === "existing" ? showSessionsBtn : newSessionBtn;
+        scheduleModeIndicator.style.width = `${activeBtn.offsetWidth}px`;
+        scheduleModeIndicator.style.transform = `translateX(${activeBtn.offsetLeft - 4}px)`;
+    }
+
+    function setScheduleMode(mode) {
+        currentScheduleMode = mode;
+        const isExisting = mode === "existing";
+        if (newSessionBtn) newSessionBtn.classList.toggle("active", !isExisting);
+        if (showSessionsBtn) showSessionsBtn.classList.toggle("active", isExisting);
+        requestAnimationFrame(updateScheduleModeIndicator);
+    }
+
     function setPanelState(state) {
         if (!tabSchedule || !tabMonitor || !panelSchedule || !panelMonitor) return;
+        const previous = currentPanelState;
+        const direction = previous === "monitor" && state === "schedule" ? "left" : "right";
         const isMonitor = state === "monitor";
         tabSchedule.classList.toggle("active", !isMonitor);
         tabMonitor.classList.toggle("active", isMonitor);
         panelSchedule.classList.toggle("active", !isMonitor);
         panelMonitor.classList.toggle("active", isMonitor);
+        panelSchedule.classList.remove("anim-in-left", "anim-in-right");
+        panelMonitor.classList.remove("anim-in-left", "anim-in-right");
+        if (previous && previous !== state) {
+            const targetPanel = isMonitor ? panelMonitor : panelSchedule;
+            targetPanel.classList.add(direction === "right" ? "anim-in-right" : "anim-in-left");
+        }
         tabSchedule.setAttribute("aria-selected", String(!isMonitor));
         tabMonitor.setAttribute("aria-selected", String(isMonitor));
         requestAnimationFrame(updateTabIndicator);
+        currentPanelState = state;
     }
 
     if (tabSchedule) {
@@ -757,7 +1515,9 @@
     } else {
         setPanelState("schedule");
     }
+    setScheduleMode("new");
     window.addEventListener("resize", updateTabIndicator);
+    window.addEventListener("resize", updateScheduleModeIndicator);
 
     function renderSwitchState(isHidden) {
         if (!switchTrack || !switchStateText || !switchHelpText || !hiddenField) return;
@@ -789,9 +1549,165 @@
         });
     }
 
+    function resetScheduleFormForNewSession() {
+        if (!form) return;
+        form.reset();
+        if (sessionIdField) sessionIdField.value = "";
+        if (scheduleSubmitBtn) scheduleSubmitBtn.textContent = "Schedule Exam";
+        if (sessionListBox) sessionListBox.classList.remove("show");
+        if (scheduleEditorWrap) scheduleEditorWrap.classList.remove("hidden-section");
+        setScheduleMode("new");
+    }
+
+    function showExistingSessions() {
+        if (sessionListBox) sessionListBox.classList.add("show");
+        if (scheduleEditorWrap) scheduleEditorWrap.classList.add("hidden-section");
+        setScheduleMode("existing");
+    }
+
+    function setQuestionsSelection(rawQuestionIds, selector = 'input[name="question_ids"]') {
+        const selectedSet = new Set(
+            String(rawQuestionIds || "")
+                .split(",")
+                .map((x) => x.trim())
+                .filter(Boolean)
+        );
+        document.querySelectorAll(selector).forEach((cb) => {
+            cb.checked = selectedSet.has(cb.value);
+        });
+    }
+
+    function fillEditModalFromSession(btn) {
+        const sessionId = btn.dataset.sessionId || "";
+        const sessionName = btn.dataset.sessionName || "";
+        const startIso = btn.dataset.startIso || "";
+        const duration = btn.dataset.duration || "60";
+        const questionIds = btn.dataset.questionIds || "";
+
+        if (editSessionId) editSessionId.value = sessionId;
+        if (editSessionName) editSessionName.value = sessionName;
+        if (editDuration) editDuration.value = duration;
+
+        if (startIso) {
+            const dt = new Date(startIso);
+            if (!Number.isNaN(dt.getTime())) {
+                const y = dt.getFullYear();
+                const m = String(dt.getMonth() + 1).padStart(2, "0");
+                const d = String(dt.getDate()).padStart(2, "0");
+                const hh = String(dt.getHours()).padStart(2, "0");
+                const mm = String(dt.getMinutes()).padStart(2, "0");
+                if (editStartDate) editStartDate.value = `${y}-${m}-${d}`;
+                if (editStartTime) editStartTime.value = `${hh}:${mm}`;
+            }
+        }
+
+        setQuestionsSelection(questionIds, '#editQuestionList input[name="question_ids"]');
+        if (editOverlay) {
+            editOverlay.classList.add("show");
+            editOverlay.setAttribute("aria-hidden", "false");
+        }
+    }
+
+    function closeEditModal() {
+        if (!editOverlay) return;
+        editOverlay.classList.remove("show");
+        editOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    if (newSessionBtn) {
+        newSessionBtn.addEventListener("click", () => {
+            resetScheduleFormForNewSession();
+        });
+    }
+
+    if (showSessionsBtn) {
+        showSessionsBtn.addEventListener("click", () => {
+            showExistingSessions();
+        });
+    }
+
+    editSessionBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            fillEditModalFromSession(btn);
+            setPanelState("schedule");
+        });
+    });
+
+    if (editCancelBtn) {
+        editCancelBtn.addEventListener("click", () => closeEditModal());
+    }
+    if (editOverlay) {
+        editOverlay.addEventListener("click", (evt) => {
+            if (evt.target === editOverlay) closeEditModal();
+        });
+    }
+
+    if (editSessionForm) {
+        editSessionForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const selected = editSessionForm.querySelectorAll('input[name="question_ids"]:checked');
+            if (!editStartDate?.value || !editStartTime?.value) {
+                showNotice("Missing Details", "Please choose both start date and start time.");
+                return;
+            }
+            if (selected.length === 0) {
+                showNotice("No Questions Selected", "Select at least one question.");
+                return;
+            }
+            const localDateTime = new Date(`${editStartDate.value}T${editStartTime.value}`);
+            if (editStartDateTime) editStartDateTime.value = localDateTime.toISOString();
+
+            const formData = new URLSearchParams(new FormData(editSessionForm));
+            const response = await fetch("/admin/create-session", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "fetch"
+                },
+                body: formData.toString()
+            });
+            if (!response.ok) {
+                showNotice("Update Failed", "Unable to save session changes.");
+                return;
+            }
+
+            closeEditModal();
+            showNotice("Updated", "Session updated successfully.");
+            refreshMonitor();
+        });
+    }
+
+    deleteSessionBtns.forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const sid = btn.dataset.sessionId;
+            const ok = await askConfirm(
+                "Delete Session",
+                "Are you sure you want to delete this session?"
+            );
+            if (!ok || !sid) return;
+
+            const response = await fetch(`/admin/delete-session/${sid}`, {
+                method: "POST",
+                headers: { "X-Requested-With": "fetch" }
+            });
+            if (!response.ok) {
+                showNotice("Delete Failed", "Unable to delete session.");
+                return;
+            }
+            btn.closest("tr")?.remove();
+            showNotice("Deleted", "Session deleted successfully.");
+        });
+    });
+
     if (forceStartForm) {
         forceStartForm.addEventListener("submit", async (e) => {
             e.preventDefault();
+            if (forceStartBtn?.disabled) return;
+            const ok = await askConfirm(
+                "Force Start Exam",
+                "Are you sure you want to force start the exam right now for all participants?"
+            );
+            if (!ok) return;
             const formData = new URLSearchParams(new FormData(forceStartForm));
             const response = await fetch("/admin/exam-controls", {
                 method: "POST",
@@ -809,6 +1725,12 @@
     if (stopSessionForm) {
         stopSessionForm.addEventListener("submit", async (e) => {
             e.preventDefault();
+            if (stopSessionBtn?.disabled) return;
+            const ok = await askConfirm(
+                "Stop Current Session",
+                "Are you sure you want to stop the active exam session? Students will no longer continue in this session."
+            );
+            if (!ok) return;
             const formData = new URLSearchParams(new FormData(stopSessionForm));
             const response = await fetch("/admin/exam-controls", {
                 method: "POST",
@@ -826,6 +1748,13 @@
     if (addTimeForm) {
         addTimeForm.addEventListener("submit", async (e) => {
             e.preventDefault();
+            if (addTimeBtn?.disabled) return;
+            const minutesVal = Number(new FormData(addTimeForm).get("minutes") || 0);
+            const ok = await askConfirm(
+                "Add Extra Time",
+                `Are you sure you want to add ${minutesVal} minute(s) to the active exam session?`
+            );
+            if (!ok) return;
             const formData = new URLSearchParams(new FormData(addTimeForm));
             const response = await fetch("/admin/exam-controls", {
                 method: "POST",
@@ -844,16 +1773,21 @@
         e.preventDefault();
         const selected = document.querySelectorAll('input[name="question_ids"]:checked');
         if (!startDate.value || !startTime.value) {
-            alert("Please choose both start date and start time.");
+            showNotice("Missing Details", "Please choose both start date and start time.");
             return;
         }
         if (selected.length === 0) {
-            alert("Select at least one question.");
+            showNotice("No Questions Selected", "Select at least one question.");
             return;
         }
         const localDateTime = new Date(`${startDate.value}T${startTime.value}`);
         hiddenDateTime.value = localDateTime.toISOString();
 
+        askConfirm(
+            "Schedule Exam Session",
+            "Are you sure you want to schedule this exam session with the selected questions and timing?"
+        ).then((ok) => {
+            if (!ok) return;
         const formData = new URLSearchParams(new FormData(form));
         fetch("/admin/create-session", {
             method: "POST",
@@ -869,12 +1803,96 @@
         })
         .then(() => {
             refreshMonitor();
-            alert("Exam scheduled successfully.");
+            showNotice("Scheduled Successfully", "Exam session has been scheduled successfully.");
+            if (sessionIdField) sessionIdField.value = "";
+            if (scheduleSubmitBtn) scheduleSubmitBtn.textContent = "Schedule Exam";
+            resetScheduleFormForNewSession();
         })
         .catch(() => {
-            alert("Failed to schedule exam.");
+            showNotice("Schedule Failed", "Failed to schedule exam. Please try again.");
+        });
         });
     });
+
+    function askConfirm(title, message) {
+        if (!confirmOverlay || !confirmTitle || !confirmBody || !confirmOkBtn || !confirmCancelBtn) {
+            return Promise.resolve(window.confirm(message));
+        }
+
+        return new Promise((resolve) => {
+            confirmTitle.textContent = title;
+            confirmBody.textContent = message;
+            confirmOverlay.classList.add("show");
+            confirmOverlay.setAttribute("aria-hidden", "false");
+
+            const cleanup = () => {
+                confirmOverlay.classList.remove("show");
+                confirmOverlay.setAttribute("aria-hidden", "true");
+                confirmOkBtn.removeEventListener("click", onOk);
+                confirmCancelBtn.removeEventListener("click", onCancel);
+                confirmOverlay.removeEventListener("click", onOverlayClick);
+                document.removeEventListener("keydown", onEsc);
+            };
+
+            const onOk = () => {
+                cleanup();
+                resolve(true);
+            };
+            const onCancel = () => {
+                cleanup();
+                resolve(false);
+            };
+            const onOverlayClick = (evt) => {
+                if (evt.target === confirmOverlay) onCancel();
+            };
+            const onEsc = (evt) => {
+                if (evt.key === "Escape") onCancel();
+            };
+
+            confirmOkBtn.addEventListener("click", onOk);
+            confirmCancelBtn.addEventListener("click", onCancel);
+            confirmOverlay.addEventListener("click", onOverlayClick);
+            document.addEventListener("keydown", onEsc);
+        });
+    }
+
+    function showNotice(title, message) {
+        if (!confirmOverlay || !confirmTitle || !confirmBody || !confirmOkBtn || !confirmCancelBtn) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            confirmTitle.textContent = title;
+            confirmBody.textContent = message;
+            confirmOkBtn.textContent = "OK";
+            confirmCancelBtn.style.display = "none";
+            confirmOverlay.classList.add("show");
+            confirmOverlay.setAttribute("aria-hidden", "false");
+
+            const cleanup = () => {
+                confirmOverlay.classList.remove("show");
+                confirmOverlay.setAttribute("aria-hidden", "true");
+                confirmOkBtn.textContent = "Yes, Continue";
+                confirmCancelBtn.style.display = "";
+                confirmOkBtn.removeEventListener("click", onOk);
+                confirmOverlay.removeEventListener("click", onOverlayClick);
+                document.removeEventListener("keydown", onEsc);
+                resolve();
+            };
+
+            const onOk = () => cleanup();
+            const onOverlayClick = (evt) => {
+                if (evt.target === confirmOverlay) cleanup();
+            };
+            const onEsc = (evt) => {
+                if (evt.key === "Escape") cleanup();
+            };
+
+            confirmOkBtn.addEventListener("click", onOk);
+            confirmOverlay.addEventListener("click", onOverlayClick);
+            document.addEventListener("keydown", onEsc);
+        });
+    }
 
     async function refreshMonitor() {
         if (!monitorReady || !monitorProgress || !monitorCompleted) return;
@@ -882,23 +1900,84 @@
             const response = await fetch("/exam-status");
             if (!response.ok) return;
             const data = await response.json();
+            monitorSessionState = {
+                hasSession: Boolean(data.has_session),
+                started: Boolean(data.started),
+                paused: Boolean(data.paused)
+            };
+            syncMonitorActionButtons();
             monitorReady.textContent = `${data.ready_count}/${data.total_count}`;
             monitorProgress.textContent = `${data.in_progress_count}`;
             monitorCompleted.textContent = `${data.completed_count}`;
             isTimerRunning = Boolean(data.has_session && data.started && !data.paused);
+            if (sessionChipName) {
+                sessionChipName.textContent = data.has_session ? data.session_name : "No Active Session";
+            }
+            if (tipSessionName) tipSessionName.textContent = data.has_session ? data.session_name : "--";
+            if (tipDuration) tipDuration.textContent = data.has_session ? `${data.duration_minutes} min` : "--";
+            if (tipScheduled) {
+                if (data.scheduled_start_iso) {
+                    tipScheduled.textContent = new Date(data.scheduled_start_iso).toLocaleString([], {
+                        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+                    });
+                } else {
+                    tipScheduled.textContent = "--";
+                }
+            }
+            if (tipEnd) {
+                if (data.end_time_iso) {
+                    tipEnd.textContent = new Date(data.end_time_iso).toLocaleString([], {
+                        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+                    });
+                } else {
+                    tipEnd.textContent = "--";
+                }
+            }
+            if (tipStatus) {
+                if (!data.has_session) tipStatus.textContent = "--";
+                else if (data.paused) tipStatus.textContent = "Paused";
+                else if (data.started) tipStatus.textContent = "Running";
+                else tipStatus.textContent = "Scheduled";
+            }
             const sec = Number(data.remaining_seconds);
             localRemainingSeconds = Number.isFinite(sec) ? Math.max(0, sec) : null;
-            if (monitorScheduledAt) {
+            if (monitorScheduledText) {
                 if (data.scheduled_start_iso) {
                     const dt = new Date(data.scheduled_start_iso);
-                    monitorScheduledAt.textContent = `Scheduled: ${dt.toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`;
+                    monitorScheduledText.textContent = `Scheduled: ${dt.toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`;
                 } else {
-                    monitorScheduledAt.textContent = "Scheduled: --";
+                    monitorScheduledText.textContent = "Scheduled: --";
+                }
+            }
+            if (monitorLiveState) {
+                monitorLiveState.classList.remove("live", "not-live", "paused");
+                if (monitorLiveDot) monitorLiveDot.classList.remove("blink");
+                if (!data.has_session) {
+                    if (monitorScheduledAt) monitorScheduledAt.classList.remove("live-only");
+                    if (monitorScheduledText) monitorScheduledText.style.display = "";
+                    monitorLiveState.classList.add("not-live");
+                    if (monitorLiveLabel) monitorLiveLabel.textContent = "NOT LIVE";
+                } else if (data.paused) {
+                    if (monitorScheduledAt) monitorScheduledAt.classList.remove("live-only");
+                    if (monitorScheduledText) monitorScheduledText.style.display = "";
+                    monitorLiveState.classList.add("paused");
+                    if (monitorLiveLabel) monitorLiveLabel.textContent = "PAUSED";
+                } else if (data.started) {
+                    if (monitorScheduledAt) monitorScheduledAt.classList.add("live-only");
+                    if (monitorScheduledText) monitorScheduledText.style.display = "none";
+                    monitorLiveState.classList.add("live");
+                    if (monitorLiveLabel) monitorLiveLabel.textContent = "LIVE";
+                    if (monitorLiveDot) monitorLiveDot.classList.add("blink");
+                } else {
+                    if (monitorScheduledAt) monitorScheduledAt.classList.remove("live-only");
+                    if (monitorScheduledText) monitorScheduledText.style.display = "";
+                    monitorLiveState.classList.add("not-live");
+                    if (monitorLiveLabel) monitorLiveLabel.textContent = "NOT LIVE";
                 }
             }
             if (monitorLastUpdated) {
                 const now = new Date();
-                monitorLastUpdated.textContent = `Last updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+                monitorLastUpdated.textContent = `Last updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`;
             }
         } catch (_) {}
     }
@@ -924,6 +2003,23 @@
         renderLocalTimer();
     }, 1000);
     refreshMonitor();
+    syncMonitorActionButtons();
+</script>
+<script>
+// profile-menu-close
+document.addEventListener("click", function (e) {
+    document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+        if (!menu.contains(e.target)) menu.removeAttribute("open");
+    });
+});
+
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+            menu.removeAttribute("open");
+        });
+    }
+});
 </script>
 </body>
 </html>

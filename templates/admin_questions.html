@@ -4,211 +4,261 @@
     <title>Admin - Questions</title>
     <style>
         :root {
-            --bg: #f4f6f8;
+            --bg: #eef3f9;
             --panel: #ffffff;
-            --border: #dcdfe3;
+            --line: #d7e2ef;
+            --text: #0f172a;
+            --muted: #5b6b81;
             --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary: #6b7280;
-            --text: #111827;
+            --primary-2: #1d4ed8;
+            --warning: #f59e0b;
             --danger: #dc2626;
-            --danger-hover: #b91c1c;
-            --edit: #f59e0b;
-            --edit-hover: #d97706;
-            --muted: #6b7280;
+            --shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
-            font-family: system-ui, sans-serif;
-            background: var(--bg);
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background:
+                radial-gradient(circle at 10% -10%, rgba(37, 99, 235, 0.1), transparent 32%),
+                radial-gradient(circle at 95% 100%, rgba(14, 165, 233, 0.08), transparent 28%),
+                var(--bg);
             color: var(--text);
+            min-height: 100vh;
         }
 
         .header {
-            height: 56px;
-            background: #111827;
-            color: white;
+            height: 58px;
+            background: #0b1220;
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
-            font-size: 18px;
-            font-weight: 600;
             border-bottom: 1px solid #000;
         }
 
-        .user-info {
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-nav {
             font-size: 14px;
-            color: #9ca3af;
-        }
-
-        .page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .container {
-            background: var(--panel);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .content-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            background: #f9fafb;
-        }
-
-        .header-top {
+            color: #9fb0c8;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .action-buttons {
-            display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .btn {
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 4px;
+        .header-nav a {
+            color: #e2ebfa;
             text-decoration: none;
-            cursor: pointer;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            margin-left: 0;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            background: rgba(148, 163, 184, 0.14);
             transition: all 0.2s ease;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
+        .header-nav a:hover {
+            color: #fff;
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
 
-        .btn-secondary {
-            background: white;
-            color: var(--text);
-            border: 1px solid var(--border);
+        .page {
+            max-width: 1240px;
+            margin: 24px auto;
+            padding: 0 18px;
         }
 
-        .btn-secondary:hover {
-            background: #f9fafb;
-            border-color: var(--secondary);
+        .shell {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
         }
 
-        .stats {
+        .hero {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(135deg, #f8fbff 0%, #f3f8ff 45%, #f7fcff 100%);
+        }
+
+        .hero-top {
             display: flex;
-            gap: 16px;
-            font-size: 13px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .hero h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
             color: var(--muted);
         }
 
-        .stat {
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
-        .stat-value {
-            font-weight: 600;
-            color: var(--text);
+        .breadcrumb a:hover {
+            text-decoration: underline;
         }
 
-        /* Table Styles */
-        .table-container {
-            padding: 0;
+        .breadcrumb .separator {
+            color: var(--muted);
+        }
+
+        .hero-sub {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid #d4e3f8;
+            background: #edf4ff;
+            color: #28405e;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .stats b {
+            color: #0f172a;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.26);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .table-wrap {
+            padding: 18px;
             overflow-x: auto;
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
-            min-width: 600px;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            min-width: 640px;
         }
 
-        thead {
-            background: #f9fafb;
-        }
-
-        th {
-            padding: 12px 16px;
-            text-align: left;
-            font-weight: 600;
+        thead th {
             font-size: 12px;
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
+            letter-spacing: 0.4px;
+            font-weight: 700;
+            text-align: left;
+            padding: 0 14px 4px;
         }
 
-        td {
-            padding: 16px;
-            border-bottom: 1px solid var(--border);
+        tbody tr {
+            background: #fbfdff;
+            border: 1px solid var(--line);
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+        }
+
+        tbody td {
+            padding: 14px;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
             vertical-align: middle;
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        tbody td:first-child {
+            border-left: 1px solid var(--line);
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+            font-weight: 700;
+            color: #243447;
         }
 
-        tr:hover {
-            background: #f9fafb;
+        tbody td:last-child {
+            border-right: 1px solid var(--line);
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
         }
 
-        .question-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        tbody tr:hover {
+            transform: translateY(-1px);
         }
 
         .question-title {
-            font-weight: 600;
-            color: var(--text);
             font-size: 14px;
-        }
-
-        .question-id {
-            font-size: 12px;
-            color: var(--muted);
+            font-weight: 700;
+            color: #0f172a;
         }
 
         .test-count {
-            background: #dbeafe;
-            color: var(--primary);
-            padding: 4px 10px;
-            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #e7f0ff;
+            color: #1d4ed8;
             font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
+            font-weight: 700;
+            border: 1px solid #d3e4ff;
+        }
+
+        .col-tests {
+            text-align: center !important;
         }
 
         .actions {
@@ -218,218 +268,250 @@
         }
 
         .action-btn {
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 4px;
             border: none;
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 12px;
+            font-weight: 700;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 4px;
-            transition: all 0.2s ease;
+            gap: 5px;
             text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .action-btn.edit {
-            background: var(--edit);
-            color: #000;
+            color: #111827;
+            background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
+            box-shadow: 0 5px 12px rgba(245, 158, 11, 0.26);
         }
 
         .action-btn.edit:hover {
-            background: var(--edit-hover);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+            box-shadow: 0 8px 16px rgba(245, 158, 11, 0.32);
         }
 
         .action-btn.delete {
-            background: var(--danger);
-            color: white;
+            color: #fff;
+            background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            box-shadow: 0 5px 12px rgba(220, 38, 38, 0.24);
         }
 
         .action-btn.delete:hover {
-            background: var(--danger-hover);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+            box-shadow: 0 8px 16px rgba(220, 38, 38, 0.3);
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 48px 24px;
-            color: var(--muted);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.3;
-        }
-
-        .empty-state h3 {
-            margin: 0 0 8px 0;
-            font-size: 16px;
-            color: var(--text);
-        }
-
-        .empty-state p {
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .table-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border);
-            background: #f9fafb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .pagination {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            font-size: 13px;
-        }
-
-        .page-info {
-            color: var(--muted);
-        }
-
-        /* Form inline styling */
         form {
             display: inline;
             margin: 0;
-            padding: 0;
         }
 
-        /* Responsive */
+        .empty {
+            margin: 22px;
+            border: 1px dashed #c8d5e8;
+            border-radius: 14px;
+            background: #f8fbff;
+            text-align: center;
+            padding: 40px 20px;
+            color: #52637c;
+        }
+
+        .empty h3 {
+            color: #0f172a;
+            margin-bottom: 6px;
+            font-size: 18px;
+        }
+
+        .footer {
+            border-top: 1px solid var(--line);
+            background: #f9fbff;
+            padding: 14px 20px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 16px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 430px;
+            background: #fff;
+            border: 1px solid #dbe5f2;
+            border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+            padding: 18px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .modal-text {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 14px;
+            line-height: 1.45;
+        }
+
+        .modal-text-primary {
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .modal-question-highlight {
+            font-family: Georgia, "Times New Roman", serif;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .modal-text-warning {
+            color: #b91c1c;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
         @media (max-width: 768px) {
             .page {
-                padding: 16px;
+                padding: 0 12px;
             }
-            
-            .container {
-                border-radius: 6px;
+
+            .hero {
+                padding: 18px;
             }
-            
-            .content-header {
-                padding: 16px;
-            }
-            
-            .header-top {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .action-buttons {
-                width: 100%;
-                justify-content: flex-start;
-            }
-            
-            td, th {
+
+            .table-wrap {
                 padding: 12px;
             }
-            
-            .table-footer {
-                flex-direction: column;
-                gap: 12px;
-                align-items: flex-start;
+
+            .hero h1 {
+                font-size: 21px;
             }
         }
+    
+        /* admin-cute-polish */
+        body {
+            background:
+                radial-gradient(circle at 6% -8%, rgba(59, 130, 246, 0.12), transparent 34%),
+                radial-gradient(circle at 94% 108%, rgba(14, 165, 233, 0.1), transparent 30%),
+                var(--bg, #f4f6f8) !important;
+        }
+
+        .container,
+        .shell {
+            border-radius: 16px !important;
+            border-color: #d7e2ef !important;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.09) !important;
+        }
+
+        .btn,
+        .action-btn,
+        .remove-btn,
+        .remove-test-case,
+        .btn-sm {
+            border-radius: 999px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.1px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+        }
+
+        .btn:hover,
+        .action-btn:hover,
+        .remove-btn:hover,
+        .remove-test-case:hover,
+        .btn-sm:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.03);
+        }
+
+        h1 {
+            letter-spacing: 0.2px;
+        }
+
     </style>
 </head>
 <body>
-
 <div class="header">
-    <div>Admin Panel</div>
-    <div class="user-info">
-        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
-        | <a href="/admin/dashboard" style="color: #9ca3af; text-decoration: none;">Dashboard</a>
-        | <a href="/" style="color: #9ca3af; text-decoration: none;">View Exam</a>
+    <div class="header-title"><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
+    <div class="header-nav">
+        Logged in as <strong>{{ session.get('username', 'Admin') }}</strong>
+        <a href="/admin/dashboard">Dashboard</a>
     </div>
 </div>
 
 <div class="page">
-    <div class="container">
-        <div class="content-header">
-            <div class="header-top">
+    <div class="shell">
+        <div class="hero">
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <span class="separator">/</span>
+                <span>Manage Questions</span>
+            </div>
+            <div class="hero-top">
                 <h1>Manage Questions</h1>
-                <div class="action-buttons">
-                    <a href="/admin" class="btn btn-primary">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                        </svg>
-                        Add New Question
-                    </a>
-                    <a href="/" class="btn btn-secondary">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                            <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
-                        </svg>
-                        Back to Exam
-                    </a>
-                </div>
-            </div>
-            
-            <div class="stats">
-                <div class="stat">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8 1a2.5 2.5 0 0 0-2.5 2.5V4h5v-.5A2.5 2.5 0 0 0 8 1zm3.5 3v-.5a3.5 3.5 0 1 1-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/>
+                <a href="/admin" class="btn btn-primary">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                     </svg>
-                    <span>Total Questions: <span class="stat-value">{{ questions|length }}</span></span>
-                </div>
-                <div class="stat">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                    </svg>
-                    <span>Total Test Cases: <span class="stat-value">
-                        {% set total_tests = namespace(value=0) %}
-                        {% for q in questions %}
-                            {% set total_tests.value = total_tests.value + q[2] %}
-                        {% endfor %}
-                        {{ total_tests.value }}
-                    </span></span>
-                </div>
+                    Add New Question
+                </a>
             </div>
+            <div class="hero-sub">Edit or remove existing coding questions for the exam platform.</div>
+            <div class="stats">Total Questions <b>{{ questions|length }}</b></div>
         </div>
 
-        <div class="table-container">
-            {% if questions %}
+        {% if questions %}
+        <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th width="80">ID</th>
+                        <th width="70">ID</th>
                         <th>Question Title</th>
-                        <th width="120">Test Cases</th>
-                        <th width="180">Actions</th>
+                        <th width="130" class="col-tests">Test Cases</th>
+                        <th width="210">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for q in questions %}
+                    <tbody>
+                        {% for q in questions %}
                     <tr>
-                        <td>
-                            <div class="question-id">#{{ q[0] }}</div>
-                        </td>
-                        <td>
-                            <div class="question-info">
-                                <div class="question-title">{{ q[1] }}</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="test-count">{{ q[2] }}</span>
-                        </td>
+                        <td>{{ loop.index }}</td>
+                        <td><div class="question-title">{{ q[1] }}</div></td>
+                        <td class="col-tests"><span class="test-count">{{ q[2] }}</span></td>
                         <td>
                             <div class="actions">
-                                <!-- FIXED EDIT BUTTON - Proper link to edit page -->
                                 <a href="/admin/edit/{{ q[0] }}" class="action-btn edit">
                                     <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
                                     </svg>
                                     Edit
                                 </a>
-                                <form method="POST" action="/admin/delete/{{ q[0] }}"
-                                      onsubmit="return confirmDelete(this);">
+                                <form method="POST" action="/admin/delete/{{ q[0] }}" class="delete-question-form" data-question-title="{{ q[1]|e }}">
                                     <button type="submit" class="action-btn delete">
                                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -444,51 +526,80 @@
                     {% endfor %}
                 </tbody>
             </table>
-            {% else %}
-            <div class="empty-state">
-                <div class="empty-state-icon">??</div>
-                <h3>No Questions Found</h3>
-                <p>Get started by creating your first coding question.</p>
-                <div style="margin-top: 16px;">
-                    <a href="/admin" class="btn btn-primary">Create First Question</a>
-                </div>
-            </div>
-            {% endif %}
         </div>
-
-        {% if questions %}
-        <!-- REMOVED the duplicate "Back to Exam" link from the footer -->
-        <div class="table-footer">
-            <div class="pagination">
-                <span class="page-info">Showing {{ questions|length }} question{{ 's' if questions|length != 1 else '' }}</span>
+        <div class="footer">Showing {{ questions|length }} question{{ 's' if questions|length != 1 else '' }}.</div>
+        {% else %}
+        <div class="empty">
+            <h3>No Questions Yet</h3>
+            <p>Create your first question to get started.</p>
+            <div style="margin-top: 16px;">
+                <a href="/admin" class="btn btn-primary">Create First Question</a>
             </div>
-            <!-- Removed the duplicate "Back to Exam" button here -->
         </div>
         {% endif %}
     </div>
 </div>
 
-<script>
-function confirmDelete(form) {
-    if (confirm('Are you sure you want to delete this question?\n\nThis will also delete all related test cases and submissions.\nThis action cannot be undone.')) {
-        return true;
-    }
-    return false;
-}
+<div id="deleteModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-title">Confirm Delete</div>
+        <div class="modal-text">
+            <div class="modal-text-primary">
+                Are you sure you want to delete "<span class="modal-question-highlight" id="deleteQuestionTitle">this question</span>"?
+            </div>
+            <div class="modal-text-warning">This action cannot be undone.</div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="action-btn edit" id="deleteCancelBtn">Cancel</button>
+            <button type="button" class="action-btn delete" id="deleteConfirmBtn">Yes, Delete</button>
+        </div>
+    </div>
+</div>
 
-// Handle keyboard shortcuts
+<script>
+let pendingDeleteForm = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteQuestionTitle = document.getElementById('deleteQuestionTitle');
+    const deleteCancelBtn = document.getElementById('deleteCancelBtn');
+    const deleteConfirmBtn = document.getElementById('deleteConfirmBtn');
+    const deleteForms = document.querySelectorAll('.delete-question-form');
+
+    function closeDeleteModal() {
+        deleteModal.classList.remove('show');
+        deleteModal.setAttribute('aria-hidden', 'true');
+        pendingDeleteForm = null;
+    }
+
+    deleteForms.forEach((form) => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            pendingDeleteForm = form;
+            deleteQuestionTitle.textContent = form.dataset.questionTitle || 'this question';
+            deleteModal.classList.add('show');
+            deleteModal.setAttribute('aria-hidden', 'false');
+        });
+    });
+
+    deleteCancelBtn.addEventListener('click', closeDeleteModal);
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteModal();
+    });
+    deleteConfirmBtn.addEventListener('click', () => {
+        if (!pendingDeleteForm) return closeDeleteModal();
+        const formToSubmit = pendingDeleteForm;
+        closeDeleteModal();
+        formToSubmit.submit();
+    });
+});
+
 document.addEventListener('keydown', function(e) {
-    // Ctrl+Shift+N to add new question
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
         e.preventDefault();
         window.location.href = '/admin';
     }
-    // Escape to go back to exam
-    else if (e.key === 'Escape') {
-        window.location.href = '/';
-    }
 });
 </script>
-
 </body>
 </html>

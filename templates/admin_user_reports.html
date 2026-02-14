@@ -45,36 +45,106 @@
         .user-info {
             font-size: 14px;
             color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .user-info a {
-            color: #9ca3af;
+            color: #e2ebfa;
             text-decoration: none;
-            margin-left: 8px;
+            margin-left: 0;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            background: rgba(148, 163, 184, 0.14);
+            transition: all 0.2s ease;
         }
 
         .user-info a:hover {
             color: white;
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-menu summary {
+            list-style: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(148, 163, 184, 0.16);
+            color: #e2ebfa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu summary::-webkit-details-marker { display: none; }
+        .profile-menu summary:hover {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            z-index: 20;
+        }
+
+        .user-info .profile-dropdown a {
+            display: block;
+            margin: 0;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #e2ebfa;
+        }
+
+        .user-info .profile-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.25);
+            transform: none;
         }
 
         .page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px;
+            max-width: 1280px;
+            margin: 16px auto 28px;
+            padding: 0 20px 24px;
         }
 
         .container {
             background: var(--panel);
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            border-radius: 18px;
+            border: 1px solid #d7e3f0;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 18px 34px rgba(15, 23, 42, 0.1);
         }
 
         .content-header {
-            padding: 24px;
-            border-bottom: 1px solid var(--border);
-            background: #f9fafb;
+            padding: 28px;
+            border-bottom: 1px solid #d7e3f0;
+            background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 45%, #f6fbff 100%);
         }
 
         .breadcrumb {
@@ -104,7 +174,7 @@
 
         h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 30px;
             font-weight: 700;
             color: var(--text);
         }
@@ -113,16 +183,32 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
-            padding: 24px;
-            border-bottom: 1px solid var(--border);
+            padding: 20px 24px;
+            border-bottom: 1px solid #d7e3f0;
+            background: #f8fbff;
         }
 
         .stat-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #d8e5f5;
+            border-radius: 14px;
             padding: 20px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 18px rgba(37, 99, 235, 0.08);
+        }
+
+        .stat-card:nth-child(2) {
+            background: linear-gradient(180deg, #ffffff 0%, #f4fff7 100%);
+            border-color: #cce8d4;
+        }
+
+        .stat-card:nth-child(3) {
+            background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
+            border-color: #f2dfbe;
+        }
+
+        .stat-card:nth-child(4) {
+            background: linear-gradient(180deg, #ffffff 0%, #f6f7ff 100%);
+            border-color: #d8defa;
         }
 
         .stat-card h3 {
@@ -169,7 +255,7 @@
 
         .search-bar {
             padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #d7e3f0;
             background: white;
         }
 
@@ -181,10 +267,11 @@
         .search-input {
             width: 100%;
             padding: 10px 16px 10px 40px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border: 1px solid #d2deee;
+            border-radius: 999px;
             font-size: 14px;
             transition: all 0.2s ease;
+            background: #f9fcff;
         }
 
         .search-input:focus {
@@ -207,12 +294,14 @@
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 10px;
             min-width: 800px;
+            padding: 0 12px 12px;
         }
 
         thead {
-            background: #f9fafb;
+            background: transparent;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -226,22 +315,32 @@
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border);
+            border-bottom: none;
             white-space: nowrap;
         }
 
         td {
             padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
+            border-top: 1px solid #d7e3f0;
+            border-bottom: 1px solid #d7e3f0;
             vertical-align: middle;
+            background: #fbfdff;
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        td:first-child {
+            border-left: 1px solid #d7e3f0;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
         }
 
-        tr:hover {
-            background: #f9fafb;
+        td:last-child {
+            border-right: 1px solid #d7e3f0;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        tbody tr:hover td {
+            background: #f3f8ff;
             cursor: pointer;
         }
 
@@ -283,27 +382,31 @@
 
         .progress-badge {
             padding: 4px 10px;
-            border-radius: 12px;
+            border-radius: 999px;
             font-size: 12px;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            border: 1px solid transparent;
         }
 
         .progress-good {
             background: #d1fae5;
             color: #065f46;
+            border-color: #9ee5c6;
         }
 
         .progress-average {
             background: #fef3c7;
             color: #92400e;
+            border-color: #f4d88f;
         }
 
         .progress-poor {
             background: #fee2e2;
             color: #991b1b;
+            border-color: #f4b2b2;
         }
 
         .score-cell {
@@ -324,36 +427,38 @@
         }
 
         .action-cell {
-            text-align: right;
+            text-align: center;
         }
 
         .btn {
             padding: 6px 12px;
             font-size: 12px;
             font-weight: 600;
-            border-radius: 4px;
+            border-radius: 999px;
             border: none;
             cursor: pointer;
             transition: all 0.2s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 4px;
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
+            box-shadow: 0 8px 14px rgba(37, 99, 235, 0.24);
         }
 
         .btn-primary:hover {
-            background: var(--primary-hover);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
 
         .table-footer {
             padding: 20px 24px;
-            border-top: 1px solid var(--border);
-            background: #f9fafb;
+            border-top: 1px solid #d7e3f0;
+            background: #f8fbff;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -371,9 +476,10 @@
         }
 
         .empty-state-icon {
-            font-size: 48px;
+            font-size: 42px;
             margin-bottom: 16px;
-            opacity: 0.3;
+            opacity: 0.4;
+            color: #6b7fa1;
         }
 
         .empty-state h3 {
@@ -406,17 +512,66 @@
                 padding: 12px;
             }
         }
+    
+        /* admin-cute-polish */
+        body {
+            background:
+                radial-gradient(circle at 6% -8%, rgba(59, 130, 246, 0.12), transparent 34%),
+                radial-gradient(circle at 94% 108%, rgba(14, 165, 233, 0.1), transparent 30%),
+                var(--bg, #f4f6f8) !important;
+        }
+
+        .container,
+        .shell {
+            border-radius: 16px !important;
+            border-color: #d7e2ef !important;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.09) !important;
+        }
+
+        .btn,
+        .action-btn,
+        .remove-btn,
+        .remove-test-case,
+        .btn-sm {
+            border-radius: 999px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.1px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+        }
+
+        .btn:hover,
+        .action-btn:hover,
+        .remove-btn:hover,
+        .remove-test-case:hover,
+        .btn-sm:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.03);
+        }
+
+        h1 {
+            letter-spacing: 0.2px;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div>Admin Panel - User Reports</div>
+    <div><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
     <div class="user-info">
         Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
         <a href="/admin/dashboard">Dashboard</a>
         <a href="/">View Exam</a>
-        <a href="/logout">Logout</a>
+        <details class="profile-menu">
+            <summary aria-label="Profile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-2.761 0-5 1.79-5 4v1h10v-1c0-2.21-2.239-4-5-4z"/>
+                </svg>
+            </summary>
+            <div class="profile-dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </details>
     </div>
 </div>
 
@@ -492,7 +647,7 @@
                 <table id="usersTable">
                     <thead>
                         <tr>
-                            <th width="50">#</th>
+                            <th width="50">ID</th>
                             <th>User</th>
                             <th width="120">Submissions</th>
                             <th width="120">Success Rate</th>
@@ -504,7 +659,7 @@
                         {% for u in users %}
                         <tr onclick="window.location.href='/admin/user_reports/{{ u.id }}'" style="cursor: pointer;">
                             <td>
-                                <div style="font-size: 12px; color: var(--muted);">#{{ loop.index }}</div>
+                                <div class="user-id">{{ loop.index }}</div>
                             </td>
                             <td>
                                 <div class="user-cell">
@@ -513,7 +668,7 @@
                                     </div>
                                     <div class="user-details">
                                         <div class="user-name">{{ u.username }}</div>
-                                        <div class="user-id">ID: {{ u.id }}</div>
+                                        <div class="user-id">User ID: {{ loop.index }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -553,7 +708,7 @@
                             </td>
                             <td class="action-cell">
                                 <a href="/admin/user_reports/{{ u.id }}" class="btn btn-primary" onclick="event.stopPropagation();">
-                                    View Details
+                                    View Report
                                 </a>
                             </td>
                         </tr>
@@ -562,7 +717,7 @@
                 </table>
                 {% else %}
                 <div class="empty-state">
-                    <div class="empty-state-icon">??</div>
+                    <div class="empty-state-icon">USR</div>
                     <h3>No Users Found</h3>
                     <p>There are no users registered in the system yet.</p>
                 </div>
@@ -573,11 +728,6 @@
         <div class="table-footer">
             <div>
                 <span class="page-info">Showing {{ users|length }} user{{ 's' if users|length != 1 else '' }}</span>
-            </div>
-            <div>
-                <a href="/admin/dashboard" class="btn" style="background: white; color: var(--text); border: 1px solid var(--border);">
-                    Back to Dashboard
-                </a>
             </div>
         </div>
     </div>
@@ -626,5 +776,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<script>
+// profile-menu-close
+document.addEventListener("click", function (e) {
+    document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+        if (!menu.contains(e.target)) menu.removeAttribute("open");
+    });
+});
+
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+            menu.removeAttribute("open");
+        });
+    }
+});
+</script>
 </body>
 </html>
