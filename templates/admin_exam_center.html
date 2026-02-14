@@ -181,11 +181,84 @@
             line-height: 1.45;
         }
 
-        .content {
+        .motion-stage {
             padding: 22px;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 18px;
+        }
+
+        .dashboard-card {
+            border: 1px solid #dce6f5;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f9fbff 0%, #f3f8ff 100%);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+            padding: 14px;
+        }
+
+        .motion-tabs {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px;
+            border: 1px solid #d7e2f2;
+            background: #eaf0fa;
+            border-radius: 999px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 8px 16px rgba(11, 95, 255, 0.16);
+            transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1), width 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            z-index: 0;
+        }
+
+        .motion-tab {
+            position: relative;
+            z-index: 1;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #4d5f7a;
+            background: transparent;
+            cursor: pointer;
+            transition: color 200ms ease, transform 200ms ease;
+        }
+
+        .motion-tab:hover {
+            color: #1f3a63;
+            transform: translateY(-1px);
+        }
+
+        .motion-tab.active {
+            color: #0b3f9f;
+        }
+
+        .tab-content {
+            position: relative;
+        }
+
+        .tab-panel {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 260ms ease, transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            pointer-events: none;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .tab-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            height: auto;
+            overflow: visible;
         }
 
         .card {
@@ -193,6 +266,13 @@
             border: 1px solid var(--line);
             border-radius: 14px;
             padding: 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            transition: transform 260ms ease, box-shadow 260ms ease;
+        }
+
+        .tab-panel.active .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
         }
 
         .card h3 {
@@ -422,8 +502,14 @@
         }
 
         @media (max-width: 980px) {
-            .content {
-                grid-template-columns: 1fr;
+            .motion-tabs {
+                display: flex;
+                width: 100%;
+            }
+
+            .motion-tab {
+                flex: 1;
+                text-align: center;
             }
         }
 
@@ -487,97 +573,111 @@
             </div>
         </div>
 
-        <div class="content">
-            <div class="card" id="exam-scheduling">
-                <h3>Exam Scheduling</h3>
-                <div class="subtext">Set the session timing and pick questions to include.</div>
-
-                <form method="POST" action="/admin/create-session" id="scheduleForm">
-                    <div class="form-row">
-                        <label>Session Name</label>
-                        <input type="text" name="session_name" value="Batch Exam" required>
-                    </div>
-
-                    <div class="datetime-row">
-                        <div class="form-row">
-                            <label>Start Date</label>
-                            <input type="date" id="startDate" required>
-                        </div>
-                        <div class="form-row">
-                            <label>Start Time</label>
-                            <input type="time" id="startTime" required>
-                        </div>
-                    </div>
-                    <input type="hidden" name="start_time" id="startDateTime">
-                    <div class="hint">Use local date/time. Exam begins exactly at this time unless force-started.</div>
-
-                    <div class="form-row">
-                        <label>Duration (minutes)</label>
-                        <input type="number" name="duration_minutes" min="1" value="60" required>
-                        <div class="hint">Defines exam length and end time window.</div>
-                    </div>
-
-                    <div class="form-row">
-                        <label>Questions Included</label>
-                        <div class="question-list">
-                            {% for q in all_questions %}
-                            <label class="question-item">
-                                <input type="checkbox" name="question_ids" value="{{ q[0] }}">
-                                <span class="question-text">#{{ q[0] }} - {{ q[1] }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                        <div class="hint">Select at least one question.</div>
-                    </div>
-
-                    <button class="btn btn-primary" type="submit">Schedule Exam</button>
-                </form>
+        <div class="motion-stage">
+            <div class="dashboard-card">
+            <div class="motion-tabs" role="tablist" aria-label="Exam center panels">
+                <span class="tab-indicator" id="tabIndicator"></span>
+                <button class="motion-tab active" id="tabSchedule" type="button" role="tab" aria-selected="true">Exam Scheduling</button>
+                <button class="motion-tab" id="tabMonitor" type="button" role="tab" aria-selected="false">Live Monitor</button>
             </div>
 
-            <div class="card" id="live-monitor">
-                <div class="monitor-head">
-                    <h3 style="margin:0;">Live Exam Monitor</h3>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <form method="POST" action="/admin/exam-controls" id="stopSessionForm">
-                            <input type="hidden" name="action" value="stop_session">
-                            <button class="btn btn-warning" type="submit">Stop Session</button>
-                        </form>
-                        <form method="POST" action="/admin/exam-controls" id="forceStartForm">
-                            <input type="hidden" name="action" value="force_start">
-                            <button class="btn btn-danger" type="submit">Force Start Now</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="subtext">Real-time readiness and progression overview.</div>
-                <div class="scheduled-highlight" id="monitorScheduledAt">Scheduled: --</div>
-                <div class="monitor-toolbar">
-                    <span class="monitor-badge">Live Snapshot</span>
-                    <div class="monitor-toolbar-right">
-                        <span class="monitor-time" id="monitorTimeLeft">--:--:--</span>
-                        <span class="monitor-note" id="monitorLastUpdated">Auto refresh every 5s</span>
-                    </div>
-                </div>
+            <div class="tab-content">
+                    <section class="tab-panel active" id="panelSchedule">
+                        <div class="card" id="exam-scheduling">
+                            <h3>Exam Scheduling</h3>
+                            <div class="subtext">Set the session timing and pick questions to include.</div>
 
-                <div class="monitor-grid">
-                    <div class="metric ready">
-                        <div class="label">Ready</div>
-                        <div class="value" id="monitorReady">{{ monitor.ready_count }}/{{ monitor.total_count }}</div>
-                    </div>
-                    <div class="metric progress">
-                        <div class="label">In Progress</div>
-                        <div class="value" id="monitorProgress">{{ monitor.in_progress_count }}</div>
-                    </div>
-                    <div class="metric done">
-                        <div class="label">Completed</div>
-                        <div class="value" id="monitorCompleted">{{ monitor.completed_count }}</div>
-                    </div>
-                </div>
+                            <form method="POST" action="/admin/create-session" id="scheduleForm">
+                                <div class="form-row">
+                                    <label>Session Name</label>
+                                    <input type="text" name="session_name" value="Batch Exam" required>
+                                </div>
 
-                <form method="POST" action="/admin/exam-controls" class="add-time-form" id="addTimeForm">
-                    <input type="hidden" name="action" value="add_time">
-                    <input type="number" name="minutes" min="1" value="10">
-                    <button class="btn btn-primary" type="submit">Add Time (minutes)</button>
-                </form>
+                                <div class="datetime-row">
+                                    <div class="form-row">
+                                        <label>Start Date</label>
+                                        <input type="date" id="startDate" required>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>Start Time</label>
+                                        <input type="time" id="startTime" required>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="start_time" id="startDateTime">
+                                <div class="hint">Use local date/time. Exam begins exactly at this time unless force-started.</div>
+
+                                <div class="form-row">
+                                    <label>Duration (minutes)</label>
+                                    <input type="number" name="duration_minutes" min="1" value="60" required>
+                                    <div class="hint">Defines exam length and end time window.</div>
+                                </div>
+
+                                <div class="form-row">
+                                    <label>Questions Included</label>
+                                    <div class="question-list">
+                                        {% for q in all_questions %}
+                                        <label class="question-item">
+                                            <input type="checkbox" name="question_ids" value="{{ q[0] }}">
+                                            <span class="question-text">#{{ q[0] }} - {{ q[1] }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="hint">Select at least one question.</div>
+                                </div>
+
+                                <button class="btn btn-primary" type="submit">Schedule Exam</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <section class="tab-panel" id="panelMonitor">
+                        <div class="card" id="live-monitor">
+                            <div class="monitor-head">
+                                <h3 style="margin:0;">Live Exam Monitor</h3>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <form method="POST" action="/admin/exam-controls" id="stopSessionForm">
+                                        <input type="hidden" name="action" value="stop_session">
+                                        <button class="btn btn-warning" type="submit">Stop Session</button>
+                                    </form>
+                                    <form method="POST" action="/admin/exam-controls" id="forceStartForm">
+                                        <input type="hidden" name="action" value="force_start">
+                                        <button class="btn btn-danger" type="submit">Force Start Now</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="subtext">Real-time readiness and progression overview.</div>
+                            <div class="scheduled-highlight" id="monitorScheduledAt">Scheduled: --</div>
+                            <div class="monitor-toolbar">
+                                <span class="monitor-badge">Live Snapshot</span>
+                                <div class="monitor-toolbar-right">
+                                    <span class="monitor-time" id="monitorTimeLeft">--:--:--</span>
+                                    <span class="monitor-note" id="monitorLastUpdated">Auto refresh every 5s</span>
+                                </div>
+                            </div>
+
+                            <div class="monitor-grid">
+                                <div class="metric ready">
+                                    <div class="label">Ready</div>
+                                    <div class="value" id="monitorReady">{{ monitor.ready_count }}/{{ monitor.total_count }}</div>
+                                </div>
+                                <div class="metric progress">
+                                    <div class="label">In Progress</div>
+                                    <div class="value" id="monitorProgress">{{ monitor.in_progress_count }}</div>
+                                </div>
+                                <div class="metric done">
+                                    <div class="label">Completed</div>
+                                    <div class="value" id="monitorCompleted">{{ monitor.completed_count }}</div>
+                                </div>
+                            </div>
+
+                            <form method="POST" action="/admin/exam-controls" class="add-time-form" id="addTimeForm">
+                                <input type="hidden" name="action" value="add_time">
+                                <input type="number" name="minutes" min="1" value="10">
+                                <button class="btn btn-primary" type="submit">Add Time (minutes)</button>
+                            </form>
+                        </div>
+                    </section>
+            </div>
             </div>
         </div>
     </div>
@@ -609,6 +709,11 @@
     const switchTrack = document.getElementById("switchTrack");
     const switchStateText = document.getElementById("switchStateText");
     const switchHelpText = document.getElementById("switchHelpText");
+    const tabIndicator = document.getElementById("tabIndicator");
+    const tabSchedule = document.getElementById("tabSchedule");
+    const tabMonitor = document.getElementById("tabMonitor");
+    const panelSchedule = document.getElementById("panelSchedule");
+    const panelMonitor = document.getElementById("panelMonitor");
     const forceStartForm = document.getElementById("forceStartForm");
     const stopSessionForm = document.getElementById("stopSessionForm");
     const addTimeForm = document.getElementById("addTimeForm");
@@ -620,6 +725,39 @@
     const monitorScheduledAt = document.getElementById("monitorScheduledAt");
     let localRemainingSeconds = null;
     let isTimerRunning = false;
+
+    function updateTabIndicator() {
+        if (!tabIndicator || !tabSchedule || !tabMonitor) return;
+        const activeBtn = tabMonitor.classList.contains("active") ? tabMonitor : tabSchedule;
+        tabIndicator.style.width = `${activeBtn.offsetWidth}px`;
+        tabIndicator.style.transform = `translateX(${activeBtn.offsetLeft - 4}px)`;
+    }
+
+    function setPanelState(state) {
+        if (!tabSchedule || !tabMonitor || !panelSchedule || !panelMonitor) return;
+        const isMonitor = state === "monitor";
+        tabSchedule.classList.toggle("active", !isMonitor);
+        tabMonitor.classList.toggle("active", isMonitor);
+        panelSchedule.classList.toggle("active", !isMonitor);
+        panelMonitor.classList.toggle("active", isMonitor);
+        tabSchedule.setAttribute("aria-selected", String(!isMonitor));
+        tabMonitor.setAttribute("aria-selected", String(isMonitor));
+        requestAnimationFrame(updateTabIndicator);
+    }
+
+    if (tabSchedule) {
+        tabSchedule.addEventListener("click", () => setPanelState("schedule"));
+    }
+    if (tabMonitor) {
+        tabMonitor.addEventListener("click", () => setPanelState("monitor"));
+    }
+
+    if (window.location.hash === "#live-monitor") {
+        setPanelState("monitor");
+    } else {
+        setPanelState("schedule");
+    }
+    window.addEventListener("resize", updateTabIndicator);
 
     function renderSwitchState(isHidden) {
         if (!switchTrack || !switchStateText || !switchHelpText || !hiddenField) return;
