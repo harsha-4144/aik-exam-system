@@ -77,6 +77,65 @@
             transform: translateY(-1px);
         }
 
+        .profile-menu {
+            position: relative;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        .profile-menu summary {
+            list-style: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(148, 163, 184, 0.16);
+            color: #e2ebfa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu summary::-webkit-details-marker { display: none; }
+        .profile-menu summary:hover {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            z-index: 20;
+        }
+
+        .header-nav .profile-dropdown a {
+            display: block;
+            margin: 0;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #e2ebfa;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .header-nav .profile-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.25);
+            transform: none;
+        }
+
         .page {
             max-width: 1240px;
             margin: 24px auto;
@@ -189,6 +248,43 @@
             overflow-x: auto;
         }
 
+        .search-bar {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--line);
+            background: #fcfdff;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 520px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border: 1px solid #d8e3f1;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #fff;
+            color: #0f172a;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
         table {
             width: 100%;
             border-collapse: separate;
@@ -243,6 +339,47 @@
             color: #0f172a;
         }
 
+        .drag-handle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border: 1px solid #d7e2ef;
+            border-radius: 8px;
+            background: #f8fbff;
+            color: #64748b;
+            cursor: grab;
+            user-select: none;
+            margin-right: 8px;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .order-cell {
+            display: inline-grid;
+            grid-template-columns: 28px auto;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .order-index {
+            min-width: 18px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .question-row.dragging {
+            opacity: 0.5;
+        }
+
+        .question-row.drag-over {
+            outline: 2px dashed #3b82f6;
+            outline-offset: -6px;
+        }
+
         .test-count {
             display: inline-flex;
             align-items: center;
@@ -261,10 +398,31 @@
             text-align: center !important;
         }
 
+        .col-id {
+            text-align: left !important;
+        }
+
+        th.col-id {
+            padding-left: 50px;
+        }
+
+        td.col-id {
+            padding-left: 14px;
+        }
+
+        .col-actions {
+            text-align: center !important;
+        }
+
+        .col-title {
+            padding-left: 24px !important;
+        }
+
         .actions {
             display: flex;
             gap: 8px;
             align-items: center;
+            justify-content: center;
         }
 
         .action-btn {
@@ -330,6 +488,14 @@
             padding: 14px 20px;
             font-size: 13px;
             color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reorder-status {
+            font-weight: 700;
+            color: #1d4ed8;
         }
 
         .modal-overlay {
@@ -455,8 +621,18 @@
 <div class="header">
     <div class="header-title"><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
     <div class="header-nav">
-        Logged in as <strong>{{ session.get('username', 'Admin') }}</strong>
+        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
         <a href="/admin/dashboard">Dashboard</a>
+        <details class="profile-menu">
+            <summary aria-label="Profile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-2.761 0-5 1.79-5 4v1h10v-1c0-2.21-2.239-4-5-4z"/>
+                </svg>
+            </summary>
+            <div class="profile-dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </details>
     </div>
 </div>
 
@@ -482,28 +658,41 @@
                     Add New Question
                 </a>
             </div>
-            <div class="hero-sub">Edit or remove existing coding questions for the exam platform.</div>
+            <div class="hero-sub">Drag and drop rows to rearrange question order. Edit or remove existing coding questions for the exam platform.</div>
             <div class="stats">Total Questions <b>{{ questions|length }}</b></div>
         </div>
 
         {% if questions %}
+        <div class="search-bar">
+            <div class="search-container">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                <input id="questionSearchInput" type="text" class="search-input" placeholder="Search questions by name...">
+            </div>
+        </div>
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th width="70">ID</th>
-                        <th>Question Title</th>
+                        <th width="90" class="col-id">ID</th>
+                        <th class="col-title">Question Title</th>
                         <th width="130" class="col-tests">Test Cases</th>
-                        <th width="210">Actions</th>
+                        <th width="260" class="col-actions">Actions</th>
                     </tr>
                 </thead>
-                    <tbody>
+                    <tbody id="questionsTableBody">
                         {% for q in questions %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td><div class="question-title">{{ q[1] }}</div></td>
+                    <tr class="question-row" data-qid="{{ q[0] }}" draggable="true">
+                        <td class="col-id">
+                            <div class="order-cell">
+                                <span class="drag-handle" title="Drag to reorder">::</span>
+                                <span class="order-index">{{ loop.index }}</span>
+                            </div>
+                        </td>
+                        <td class="col-title"><div class="question-title">{{ q[1] }}</div></td>
                         <td class="col-tests"><span class="test-count">{{ q[2] }}</span></td>
-                        <td>
+                        <td class="col-actions">
                             <div class="actions">
                                 <a href="/admin/edit/{{ q[0] }}" class="action-btn edit">
                                     <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -527,7 +716,10 @@
                 </tbody>
             </table>
         </div>
-        <div class="footer">Showing {{ questions|length }} question{{ 's' if questions|length != 1 else '' }}.</div>
+        <div class="footer">
+            <span>Showing {{ questions|length }} question{{ 's' if questions|length != 1 else '' }}.</span>
+            <span id="reorderStatus" class="reorder-status"></span>
+        </div>
         {% else %}
         <div class="empty">
             <h3>No Questions Yet</h3>
@@ -557,6 +749,20 @@
 </div>
 
 <script>
+document.addEventListener("click", function (e) {
+    document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+        if (!menu.contains(e.target)) menu.removeAttribute("open");
+    });
+});
+
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+            menu.removeAttribute("open");
+        });
+    }
+});
+
 let pendingDeleteForm = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -592,6 +798,108 @@ document.addEventListener('DOMContentLoaded', () => {
         closeDeleteModal();
         formToSubmit.submit();
     });
+
+    const tableBody = document.getElementById('questionsTableBody');
+    const statusEl = document.getElementById('reorderStatus');
+    const searchInput = document.getElementById('questionSearchInput');
+    let dragRow = null;
+
+    function refreshOrderLabels() {
+        if (!tableBody) return;
+        const rows = Array.from(tableBody.querySelectorAll('.question-row'));
+        rows.forEach((row, idx) => {
+            const cell = row.querySelector('.order-index');
+            if (cell) cell.textContent = String(idx + 1);
+        });
+    }
+
+    async function persistOrder() {
+        if (!tableBody) return;
+        const questionIds = Array.from(tableBody.querySelectorAll('.question-row')).map((row) =>
+            Number(row.dataset.qid)
+        );
+
+        if (statusEl) statusEl.textContent = 'Saving order...';
+        try {
+            const response = await fetch('/admin/questions/reorder-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'fetch'
+                },
+                body: JSON.stringify({ question_ids: questionIds })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'Failed to save order');
+            }
+            if (statusEl) {
+                statusEl.textContent = 'Order saved';
+                setTimeout(() => {
+                    if (statusEl.textContent === 'Order saved') statusEl.textContent = '';
+                }, 1500);
+            }
+        } catch (error) {
+            if (statusEl) statusEl.textContent = 'Save failed. Refresh and retry.';
+        }
+    }
+
+    if (tableBody) {
+        tableBody.querySelectorAll('.question-row').forEach((row) => {
+            row.addEventListener('dragstart', (e) => {
+                if (!e.target.closest('.drag-handle')) {
+                    e.preventDefault();
+                    return;
+                }
+                dragRow = row;
+                row.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', row.dataset.qid || '');
+            });
+
+            row.addEventListener('dragend', () => {
+                row.classList.remove('dragging');
+                tableBody.querySelectorAll('.question-row').forEach((r) => r.classList.remove('drag-over'));
+            });
+
+            row.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!dragRow || dragRow === row) return;
+                row.classList.add('drag-over');
+            });
+
+            row.addEventListener('dragleave', () => {
+                row.classList.remove('drag-over');
+            });
+
+            row.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                row.classList.remove('drag-over');
+                if (!dragRow || dragRow === row) return;
+                const dropRect = row.getBoundingClientRect();
+                const shouldInsertAfter = (e.clientY - dropRect.top) > (dropRect.height / 2);
+                if (shouldInsertAfter) {
+                    row.insertAdjacentElement('afterend', dragRow);
+                } else {
+                    row.insertAdjacentElement('beforebegin', dragRow);
+                }
+                refreshOrderLabels();
+                await persistOrder();
+            });
+        });
+    }
+
+    if (searchInput && tableBody) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim().toLowerCase();
+            const rows = Array.from(tableBody.querySelectorAll('.question-row'));
+            rows.forEach((row) => {
+                const titleEl = row.querySelector('.question-title');
+                const title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                row.style.display = !query || title.includes(query) ? '' : 'none';
+            });
+        });
+    }
 });
 
 document.addEventListener('keydown', function(e) {

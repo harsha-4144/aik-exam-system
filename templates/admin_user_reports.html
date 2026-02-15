@@ -147,6 +147,20 @@
             background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 45%, #f6fbff 100%);
         }
 
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .breadcrumb {
             display: flex;
             align-items: center;
@@ -341,7 +355,6 @@
 
         tbody tr:hover td {
             background: #f3f8ff;
-            cursor: pointer;
         }
 
         .user-cell {
@@ -431,7 +444,7 @@
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 14px;
             font-size: 12px;
             font-weight: 600;
             border-radius: 999px;
@@ -453,6 +466,16 @@
 
         .btn-primary:hover {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 8px 14px rgba(220, 38, 38, 0.24);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
         }
 
         .table-footer {
@@ -491,6 +514,49 @@
         .empty-state p {
             margin: 0;
             font-size: 14px;
+        }
+
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 15, 30, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(3px);
+        }
+
+        .confirm-overlay.show {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            width: min(460px, calc(100vw - 24px));
+            background: #ffffff;
+            border: 1px solid #d7e2f2;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+            padding: 18px;
+        }
+
+        .confirm-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .confirm-body {
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
         }
 
         @media (max-width: 768px) {
@@ -561,7 +627,7 @@
     <div class="user-info">
         Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
         <a href="/admin/dashboard">Dashboard</a>
-        <a href="/">View Exam</a>
+        
         <details class="profile-menu">
             <summary aria-label="Profile">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -588,7 +654,12 @@
                 <span class="separator">/</span>
                 <span>User Reports</span>
             </div>
-            <h1>User Performance Reports</h1>
+            <div class="title-row">
+                <h1>User Performance Reports</h1>
+                <div class="header-actions">
+                    <button type="button" class="btn btn-danger" id="clearExamSubmissionsBtn">Clear Exam Submissions</button>
+                </div>
+            </div>
         </div>
 
         <div class="stats-cards">
@@ -657,7 +728,7 @@
                     </thead>
                     <tbody>
                         {% for u in users %}
-                        <tr onclick="window.location.href='/admin/user_reports/{{ u.id }}'" style="cursor: pointer;">
+                        <tr>
                             <td>
                                 <div class="user-id">{{ loop.index }}</div>
                             </td>
@@ -707,8 +778,8 @@
                                 {% endif %}
                             </td>
                             <td class="action-cell">
-                                <a href="/admin/user_reports/{{ u.id }}" class="btn btn-primary" onclick="event.stopPropagation();">
-                                    View Report
+                                <a href="/admin/user_reports/{{ u.id }}" class="btn btn-primary">
+                                    View Reports
                                 </a>
                             </td>
                         </tr>
@@ -729,6 +800,17 @@
             <div>
                 <span class="page-info">Showing {{ users|length }} user{{ 's' if users|length != 1 else '' }}</span>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay" aria-hidden="true">
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="confirm-title" id="confirmTitle">Confirm Action</div>
+        <div class="confirm-body" id="confirmBody">Are you sure you want to continue?</div>
+        <div class="confirm-actions">
+            <button class="btn" id="confirmCancelBtn" type="button">Cancel</button>
+            <button class="btn btn-primary" id="confirmOkBtn" type="button">Yes, Continue</button>
         </div>
     </div>
 </div>
@@ -758,22 +840,122 @@ function filterTable() {
     }
 }
 
-// Make entire row clickable
-document.addEventListener('DOMContentLoaded', () => {
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        row.addEventListener('click', (e) => {
-            // Don't navigate if clicking on action button
-            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
-                return;
-            }
-            const link = row.querySelector('a[href]');
-            if (link) {
-                window.location.href = link.href;
-            }
-        });
+function askConfirm(title, message) {
+    const overlay = document.getElementById('confirmOverlay');
+    const titleEl = document.getElementById('confirmTitle');
+    const bodyEl = document.getElementById('confirmBody');
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    if (!overlay || !titleEl || !bodyEl || !okBtn || !cancelBtn) {
+        return Promise.resolve(window.confirm(message));
+    }
+
+    return new Promise((resolve) => {
+        titleEl.textContent = title;
+        bodyEl.textContent = message;
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        const cleanup = () => {
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            overlay.removeEventListener('click', onOverlay);
+            document.removeEventListener('keydown', onEsc);
+        };
+        const onOk = () => { cleanup(); resolve(true); };
+        const onCancel = () => { cleanup(); resolve(false); };
+        const onOverlay = (e) => { if (e.target === overlay) onCancel(); };
+        const onEsc = (e) => { if (e.key === 'Escape') onCancel(); };
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        overlay.addEventListener('click', onOverlay);
+        document.addEventListener('keydown', onEsc);
     });
+}
+
+function showNotice(title, message) {
+    const overlay = document.getElementById('confirmOverlay');
+    const titleEl = document.getElementById('confirmTitle');
+    const bodyEl = document.getElementById('confirmBody');
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    if (!overlay || !titleEl || !bodyEl || !okBtn || !cancelBtn) {
+        alert(message);
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+        titleEl.textContent = title;
+        bodyEl.textContent = message;
+        cancelBtn.style.display = 'none';
+        okBtn.textContent = 'OK';
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        const cleanup = () => {
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+            cancelBtn.style.display = '';
+            okBtn.textContent = 'Yes, Continue';
+            okBtn.removeEventListener('click', onOk);
+            overlay.removeEventListener('click', onOverlay);
+            document.removeEventListener('keydown', onEsc);
+            resolve();
+        };
+        const onOk = () => cleanup();
+        const onOverlay = (e) => { if (e.target === overlay) cleanup(); };
+        const onEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+
+        okBtn.addEventListener('click', onOk);
+        overlay.addEventListener('click', onOverlay);
+        document.addEventListener('keydown', onEsc);
+    });
+}
+
+async function clearExamSubmissions() {
+    const ok = await askConfirm(
+        "Clear Exam Submissions",
+        "This will permanently delete only exam-session submissions. Practice submissions will be kept."
+    );
+    if (!ok) return;
+
+    const btn = document.getElementById('clearExamSubmissionsBtn');
+    const originalText = btn ? btn.textContent : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Clearing...';
+    }
+
+    try {
+        const response = await fetch('/admin/clear-exam-submissions', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'fetch' }
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+            throw new Error(data.error || 'Failed to clear exam submissions');
+        }
+        await showNotice('Done', `Deleted ${Number(data.deleted_count || 0)} exam submission(s).`);
+        window.location.reload();
+    } catch (error) {
+        await showNotice('Operation Failed', error.message || 'Failed to clear exam submissions');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = originalText || 'Clear Exam Submissions';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const clearBtn = document.getElementById('clearExamSubmissionsBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearExamSubmissions);
+    }
 });
+
 </script>
 
 <script>

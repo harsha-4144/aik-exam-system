@@ -68,6 +68,65 @@
             transform: translateY(-1px);
         }
 
+        .profile-menu {
+            position: relative;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        .profile-menu summary {
+            list-style: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(148, 163, 184, 0.16);
+            color: #e2ebfa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu summary::-webkit-details-marker { display: none; }
+        .profile-menu summary:hover {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            z-index: 20;
+        }
+
+        .header-nav .profile-dropdown a {
+            display: block;
+            margin: 0;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #e2ebfa;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .header-nav .profile-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.25);
+            transform: none;
+        }
+
         .page {
             max-width: 1200px;
             margin: 24px auto;
@@ -433,8 +492,18 @@
 <div class="header">
     <div class="header-title"><a href="/admin/dashboard" style="color: inherit; text-decoration: none;">CodeArenaX</a></div>
     <div class="header-nav">
+        Logged in as: <strong>{{ session.get('username', 'Admin') }}</strong>
         <a href="/admin/dashboard">Dashboard</a>
-        <a href="/">View Exam</a>
+        <details class="profile-menu">
+            <summary aria-label="Profile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-2.761 0-5 1.79-5 4v1h10v-1c0-2.21-2.239-4-5-4z"/>
+                </svg>
+            </summary>
+            <div class="profile-dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </details>
     </div>
 </div>
 
@@ -529,6 +598,20 @@
 </div>
 
 <script>
+    document.addEventListener("click", function (e) {
+        document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+            if (!menu.contains(e.target)) menu.removeAttribute("open");
+        });
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+                menu.removeAttribute("open");
+            });
+        }
+    });
+
     let testCaseCount = 0;
 
     function addTestCase(input = "", output = "", isExample = false) {

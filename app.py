@@ -96,12 +96,28 @@ def ensure_exam_schema():
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                     question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
                     status TEXT DEFAULT 'in_progress',
+                    verdict TEXT,
                     score INTEGER DEFAULT 0,
                     time_spent INTEGER DEFAULT 0
                 );
                 ALTER TABLE exam_progress ADD COLUMN IF NOT EXISTS session_id INTEGER REFERENCES exam_sessions(id) ON DELETE CASCADE;
+                ALTER TABLE exam_progress ADD COLUMN IF NOT EXISTS verdict TEXT;
                 CREATE UNIQUE INDEX IF NOT EXISTS ux_exam_progress_session_user_question
                     ON exam_progress(session_id, user_id, question_id);
+
+                CREATE TABLE IF NOT EXISTS submission_test_results (
+                    id SERIAL PRIMARY KEY,
+                    submission_id INTEGER NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+                    test_case_id INTEGER,
+                    case_type TEXT NOT NULL,
+                    input_data TEXT,
+                    expected_output TEXT,
+                    actual_output TEXT,
+                    status TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS ix_submission_test_results_submission
+                    ON submission_test_results(submission_id);
 
                 CREATE TABLE IF NOT EXISTS exam_settings (
                     setting_key TEXT PRIMARY KEY,
@@ -111,6 +127,11 @@ def ensure_exam_schema():
                 INSERT INTO exam_settings(setting_key, setting_value)
                 VALUES ('questions_hidden', '0')
                 ON CONFLICT (setting_key) DO NOTHING;
+
+                ALTER TABLE questions ADD COLUMN IF NOT EXISTS display_order INTEGER;
+                UPDATE questions
+                SET display_order = id
+                WHERE display_order IS NULL;
                 """
             )
             conn.commit()
@@ -296,7 +317,7 @@ def resolve_exam_question_ids(conn, exam_session):
     if question_ids:
         return question_ids
     cur = conn.cursor()
-    cur.execute("SELECT id FROM questions ORDER BY id")
+    cur.execute("SELECT id FROM questions ORDER BY display_order ASC NULLS LAST, id ASC")
     return [row[0] for row in cur.fetchall()]
 
 
@@ -751,7 +772,7 @@ def questions():
               AND s.user_id = %s
         ) AS completed
         FROM questions q
-        ORDER BY q.id
+        ORDER BY q.display_order ASC NULLS LAST, q.id ASC
     """, (session["user_id"],))
     
     questions = cur.fetchall()
@@ -879,10 +900,7 @@ def waiting_room():
         ensure_participant(conn, runtime["active"]["id"], session["user_id"])
         conn.commit()
 
-    if runtime["started"] and not runtime["paused"]:
-        if runtime["finished"]:
-            close_db(conn)
-            return redirect("/report")
+    if runtime["started"] and not runtime["paused"] and not runtime["finished"]:
         next_qid = runtime["next_qid"]
         close_db(conn)
         return redirect(f"/question/{next_qid}")
@@ -954,8 +972,8 @@ def exam_status():
             remaining_seconds = max(0, int((active.get("duration_minutes", 0) or 0) * 60))
 
     redirect_url = None
-    if runtime["hidden"] and runtime["started"] and not runtime["paused"]:
-        redirect_url = "/report" if runtime["finished"] else f"/question/{runtime['next_qid']}"
+    if runtime["hidden"] and runtime["started"] and not runtime["paused"] and not runtime["finished"]:
+        redirect_url = f"/question/{runtime['next_qid']}"
 
     close_db(conn)
     return jsonify(
@@ -1195,58 +1213,107 @@ def submit():
 
     cur = conn.cursor()
     cur.execute(
-        "SELECT input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 1 ORDER BY id",
+        "SELECT id, input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 1 ORDER BY id",
         (question_id,),
     )
     example_tests = cur.fetchall()
 
     cur.execute(
-        "SELECT input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 0 ORDER BY id",
-        (question_id,)
+        "SELECT id, input, expected_output FROM test_cases WHERE question_id = %s AND is_example = 0 ORDER BY id",
+        (question_id,),
     )
     hidden_tests = cur.fetchall()
 
     example_results = []
-    for i, (inp, exp) in enumerate(example_tests, start=1):
+    example_test_rows = []
+    for i, (tc_id, inp, exp) in enumerate(example_tests, start=1):
         result = execute_code(code, language, inp)
+        actual_output = result["output"].strip() if result["success"] else result["output"]
         status = "PASS" if result["success"] and result["output"].strip() == exp.strip() else "FAIL"
         example_results.append(
             {
                 "id": i,
                 "input": inp,
                 "expected": exp.strip(),
-                "actual": result["output"].strip() if result["success"] else result["output"],
+                "actual": actual_output,
+                "status": status,
+            }
+        )
+        example_test_rows.append(
+            {
+                "test_case_id": tc_id,
+                "case_type": "example",
+                "input": inp,
+                "expected": exp.strip(),
+                "actual": actual_output,
                 "status": status,
             }
         )
 
     hidden_passed = 0
     hidden_total = len(hidden_tests)
-    for inp, exp in hidden_tests:
+    hidden_test_rows = []
+    for tc_id, inp, exp in hidden_tests:
         result = execute_code(code, language, inp)
-        if result["success"] and result["output"].strip() == exp.strip():
+        actual_output = result["output"].strip() if result["success"] else result["output"]
+        status = "PASS" if result["success"] and result["output"].strip() == exp.strip() else "FAIL"
+        if status == "PASS":
             hidden_passed += 1
+        hidden_test_rows.append(
+            {
+                "test_case_id": tc_id,
+                "case_type": "hidden",
+                "input": inp,
+                "expected": exp.strip(),
+                "actual": actual_output,
+                "status": status,
+            }
+        )
 
     verdict = "PASS" if hidden_passed == hidden_total else "FAIL"
     score = int((hidden_passed / hidden_total) * 100) if hidden_total else 0
 
     cur.execute(
-        "INSERT INTO submissions (user_id, question_id, code, verdict, score) VALUES (%s, %s, %s, %s, %s)",
-        (user_id, question_id, code, verdict, score)
+        """
+        INSERT INTO submissions (user_id, question_id, code, verdict, score)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id
+        """,
+        (user_id, question_id, code, verdict, score),
     )
+    submission_id = cur.fetchone()[0]
+
+    for row in example_test_rows + hidden_test_rows:
+        cur.execute(
+            """
+            INSERT INTO submission_test_results
+                (submission_id, test_case_id, case_type, input_data, expected_output, actual_output, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                submission_id,
+                row["test_case_id"],
+                row["case_type"],
+                row["input"],
+                row["expected"],
+                row["actual"],
+                row["status"],
+            ),
+        )
 
     next_url = "/"
     sequential_mode = bool(exam_mode)
+    has_next_question = False
     if exam_mode:
         ensure_participant(conn, runtime["active"]["id"], user_id)
         cur.execute(
             """
-            INSERT INTO exam_progress(session_id, user_id, question_id, status, score, time_spent)
-            VALUES (%s, %s, %s, 'completed', %s, 0)
+            INSERT INTO exam_progress(session_id, user_id, question_id, status, verdict, score, time_spent)
+            VALUES (%s, %s, %s, 'completed', %s, %s, 0)
             ON CONFLICT (session_id, user_id, question_id)
-            DO UPDATE SET status = 'completed', score = EXCLUDED.score
+            DO UPDATE SET status = 'completed', verdict = EXCLUDED.verdict, score = EXCLUDED.score
             """,
-            (runtime["active"]["id"], user_id, question_id, score),
+            (runtime["active"]["id"], user_id, question_id, verdict, score),
         )
 
         next_qid = current_question_for_user(conn, runtime["active"], user_id)
@@ -1261,6 +1328,7 @@ def submit():
             )
             next_url = "/report"
         else:
+            has_next_question = True
             next_url = f"/question/{next_qid}"
 
     conn.commit()
@@ -1276,6 +1344,7 @@ def submit():
         hidden_passed=hidden_passed,
         example_results=example_results,
         sequential_mode=sequential_mode,
+        has_next_question=has_next_question,
         next_url=next_url,
         auto_seconds=10,
         question_id=question_id
@@ -1310,7 +1379,7 @@ def admin_dashboard():
         FROM questions q
         LEFT JOIN test_cases t ON t.question_id = q.id
         GROUP BY q.id
-        ORDER BY q.id DESC
+        ORDER BY q.display_order ASC NULLS LAST, q.id ASC
         LIMIT 5
     """)
     recent_questions = cur.fetchall()
@@ -1357,7 +1426,7 @@ def admin_exam_center():
 
     runtime = get_exam_runtime(conn)
     cur = conn.cursor()
-    cur.execute("SELECT id, title FROM questions ORDER BY id")
+    cur.execute("SELECT id, title FROM questions ORDER BY display_order ASC NULLS LAST, id ASC")
     all_questions = cur.fetchall()
 
     cur_dict = conn.cursor(cursor_factory=RealDictCursor)
@@ -1578,6 +1647,46 @@ def admin_exam_controls():
         return jsonify({"ok": True, "action": action})
     return redirect("/admin/exam-center#live-monitor")
 
+
+@app.route("/admin/clear-exam-submissions", methods=["POST"])
+def admin_clear_exam_submissions():
+    if not is_logged_in() or not is_admin():
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": False, "error": "Unauthorized"}), 403
+        return redirect("/")
+
+    conn = db()
+    if not conn:
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": False, "error": "Database connection error"}), 500
+        return "Database connection error", 500
+
+    cur = conn.cursor()
+    cur.execute(
+        """
+        DELETE FROM submissions s
+        WHERE EXISTS (
+            SELECT 1
+            FROM exam_sessions es
+            WHERE s.timestamp >= es.start_time
+              AND s.timestamp <= COALESCE(
+                  es.end_time,
+                  es.start_time + (es.duration_minutes || ' minutes')::interval
+              )
+              AND es.question_ids IS NOT NULL
+              AND es.question_ids <> ''
+              AND (',' || REPLACE(es.question_ids, ' ', '') || ',') LIKE ('%%,' || s.question_id::text || ',%%')
+        )
+        """
+    )
+    deleted_count = cur.rowcount
+    conn.commit()
+    close_db(conn)
+
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True, "deleted_count": deleted_count})
+    return redirect("/admin/exam-center#live-monitor")
+
 @app.route("/admin/questions")
 def admin_questions():
     if not is_logged_in() or not is_admin():
@@ -1590,16 +1699,96 @@ def admin_questions():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT q.id, q.title, COUNT(t.id)
+        SELECT q.id, q.title, COUNT(t.id), q.display_order
         FROM questions q
         LEFT JOIN test_cases t ON t.question_id = q.id
         GROUP BY q.id
-        ORDER BY q.id
+        ORDER BY q.display_order ASC NULLS LAST, q.id ASC
     """)
     questions = cur.fetchall()
     close_db(conn)
 
     return render_template("admin_questions.html", questions=questions)
+
+
+@app.route("/admin/questions/reorder", methods=["POST"])
+def admin_reorder_questions():
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    qid = request.form.get("qid", type=int)
+    direction = (request.form.get("direction") or "").strip().lower()
+    if not qid or direction not in {"up", "down"}:
+        return redirect("/admin/questions")
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM questions ORDER BY display_order ASC NULLS LAST, id ASC")
+    ordered_ids = [row[0] for row in cur.fetchall()]
+
+    if qid in ordered_ids:
+        idx = ordered_ids.index(qid)
+        swap_idx = idx - 1 if direction == "up" else idx + 1
+        if 0 <= swap_idx < len(ordered_ids):
+            ordered_ids[idx], ordered_ids[swap_idx] = ordered_ids[swap_idx], ordered_ids[idx]
+            for pos, question_id in enumerate(ordered_ids, start=1):
+                cur.execute(
+                    "UPDATE questions SET display_order = %s WHERE id = %s",
+                    (pos, question_id),
+                )
+            conn.commit()
+
+    close_db(conn)
+    return redirect("/admin/questions")
+
+
+@app.route("/admin/questions/reorder-all", methods=["POST"])
+def admin_reorder_questions_all():
+    if not is_logged_in() or not is_admin():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+
+    payload = request.get_json(silent=True) or {}
+    qids = payload.get("question_ids")
+    if not isinstance(qids, list):
+        return jsonify({"ok": False, "error": "Invalid payload"}), 400
+
+    normalized = []
+    seen = set()
+    for raw in qids:
+        try:
+            qid = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if qid in seen:
+            continue
+        normalized.append(qid)
+        seen.add(qid)
+
+    conn = db()
+    if not conn:
+        return jsonify({"ok": False, "error": "Database connection error"}), 500
+
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM questions ORDER BY display_order ASC NULLS LAST, id ASC")
+    existing_ids = [row[0] for row in cur.fetchall()]
+    existing_set = set(existing_ids)
+
+    if set(normalized) != existing_set:
+        close_db(conn)
+        return jsonify({"ok": False, "error": "Question list mismatch"}), 400
+
+    for pos, question_id in enumerate(normalized, start=1):
+        cur.execute(
+            "UPDATE questions SET display_order = %s WHERE id = %s",
+            (pos, question_id),
+        )
+
+    conn.commit()
+    close_db(conn)
+    return jsonify({"ok": True})
 
 @app.route("/admin/delete/<int:qid>", methods=["POST"])
 def delete_question(qid):
@@ -1618,6 +1807,12 @@ def delete_question(qid):
     cur.execute("DELETE FROM submissions WHERE question_id = %s", (qid,))
     # Delete the question
     cur.execute("DELETE FROM questions WHERE id = %s", (qid,))
+
+    # Keep ordering contiguous after deletion
+    cur.execute("SELECT id FROM questions ORDER BY display_order ASC NULLS LAST, id ASC")
+    ordered_ids = [row[0] for row in cur.fetchall()]
+    for pos, question_id in enumerate(ordered_ids, start=1):
+        cur.execute("UPDATE questions SET display_order = %s WHERE id = %s", (pos, question_id))
 
     conn.commit()
     close_db(conn)
@@ -1645,9 +1840,11 @@ def admin():
         cur = conn.cursor()
 
         # Insert question with time_limit
+        cur.execute("SELECT COALESCE(MAX(display_order), 0) FROM questions")
+        next_display_order = int(cur.fetchone()[0] or 0) + 1
         cur.execute(
-            "INSERT INTO questions (title, description, marks, time_limit) VALUES (%s, %s, %s, %s)",
-            (title, description, marks, time_limit)
+            "INSERT INTO questions (title, description, marks, time_limit, display_order) VALUES (%s, %s, %s, %s, %s)",
+            (title, description, marks, time_limit, next_display_order)
         )
         
         # Get the ID of the inserted question
@@ -1884,14 +2081,32 @@ def admin_user_detail(user_id):
     display_row = cur.fetchone()
     display_user_id = display_row[0] if display_row else user_id
     
-    # Get user's submissions with question details
+    # Get user's submissions with question details and classify exam/practice mode.
+    # Exam classification is inferred from whether the submission time falls within
+    # an exam session window and the question belongs to that session's question set.
     cur.execute("""
-        SELECT 
-            q.title, 
-            s.verdict, 
+        SELECT
+            s.id,
+            q.title,
+            s.verdict,
             s.score,
             s.timestamp,
-            s.question_id
+            s.question_id,
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM exam_sessions es
+                    WHERE s.timestamp >= es.start_time
+                      AND s.timestamp <= COALESCE(
+                          es.end_time,
+                          es.start_time + (es.duration_minutes || ' minutes')::interval
+                      )
+                      AND es.question_ids IS NOT NULL
+                      AND es.question_ids <> ''
+                      AND (',' || REPLACE(es.question_ids, ' ', '') || ',') LIKE ('%%,' || s.question_id::text || ',%%')
+                ) THEN 'exam'
+                ELSE 'practice'
+            END AS submission_mode
         FROM submissions s
         JOIN questions q ON s.question_id = q.id
         WHERE s.user_id = %s
@@ -1899,15 +2114,17 @@ def admin_user_detail(user_id):
     """, (user_id,))
     
     submissions = cur.fetchall()
+    exam_submissions = [s for s in submissions if s[6] == "exam"]
+    practice_submissions = [s for s in submissions if s[6] == "practice"]
     
     # Calculate statistics
     total_submissions = len(submissions)
-    passed = sum(1 for s in submissions if s[1] == 'PASS')
+    passed = sum(1 for s in submissions if s[2] == 'PASS')
     success_rate = int((passed / total_submissions * 100)) if total_submissions > 0 else 0
-    avg_score = round(sum(s[2] for s in submissions) / total_submissions, 1) if total_submissions > 0 else 0
+    avg_score = round(sum(s[3] for s in submissions) / total_submissions, 1) if total_submissions > 0 else 0
     
     # Get all questions to show completion status
-    cur.execute("SELECT id, title FROM questions ORDER BY id")
+    cur.execute("SELECT id, title FROM questions ORDER BY display_order ASC NULLS LAST, id ASC")
     all_questions = cur.fetchall()
     
     # Get which questions user has attempted
@@ -1931,11 +2148,70 @@ def admin_user_detail(user_id):
         display_user_id=display_user_id,
         username=username,
         submissions=submissions,
+        exam_submissions=exam_submissions,
+        practice_submissions=practice_submissions,
         total_submissions=total_submissions,
         passed=passed,
         success_rate=success_rate,
         avg_score=avg_score,
         question_status=question_status
+    )
+
+@app.route("/admin/submission/<int:submission_id>")
+def admin_submission_detail(submission_id):
+    if not is_logged_in() or not is_admin():
+        return redirect("/")
+
+    conn = db()
+    if not conn:
+        return "Database connection error", 500
+
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(
+        """
+        SELECT s.id,
+               s.user_id,
+               u.username,
+               q.title AS question_title,
+               s.question_id,
+               s.verdict,
+               s.score,
+               s.timestamp,
+               s.code
+        FROM submissions s
+        JOIN users u ON s.user_id = u.id
+        JOIN questions q ON s.question_id = q.id
+        WHERE s.id = %s
+        """,
+        (submission_id,),
+    )
+    submission = cur.fetchone()
+    if not submission:
+        close_db(conn)
+        return "Submission not found", 404
+
+    cur.execute(
+        """
+        SELECT case_type,
+               input_data,
+               expected_output,
+               actual_output,
+               status
+        FROM submission_test_results
+        WHERE submission_id = %s
+        ORDER BY
+            CASE WHEN case_type = 'example' THEN 0 ELSE 1 END,
+            id ASC
+        """,
+        (submission_id,),
+    )
+    test_results = cur.fetchall()
+    close_db(conn)
+
+    return render_template(
+        "admin_submission_detail.html",
+        submission=submission,
+        test_results=test_results,
     )
 
 @app.route("/admin/reports")
@@ -2012,50 +2288,68 @@ def report():
         return "Database connection error", 500
 
     runtime = get_exam_runtime(conn, user_id=session["user_id"])
+    back_url = "/waiting-room" if runtime["hidden"] else "/"
     selected_questions = []
-    if runtime["active"]:
-        selected_questions = resolve_exam_question_ids(conn, runtime["active"])
+    report_session = runtime["active"]
 
-    cur = conn.cursor()
-
-    if selected_questions:
+    if not report_session:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute(
             """
-            SELECT q.title,
-                   CASE
-                       WHEN s.verdict IS NULL THEN 'NO ATTEMPT'
-                       ELSE s.verdict
-                   END as verdict,
-                   COALESCE(s.score, 0) as score
-            FROM questions q
-            LEFT JOIN submissions s ON s.question_id = q.id AND s.user_id = %s
-            WHERE q.id = ANY(%s)
-            ORDER BY q.id
-            """,
-            (session["user_id"], selected_questions),
-        )
-    else:
-        cur.execute(
-            """
-            SELECT q.title,
-                   CASE
-                       WHEN s.verdict IS NULL THEN 'NO ATTEMPT'
-                       ELSE s.verdict
-                   END as verdict,
-                   COALESCE(s.score, 0) as score
-            FROM questions q
-            LEFT JOIN submissions s ON s.question_id = q.id AND s.user_id = %s
-            ORDER BY q.id
+            SELECT es.*
+            FROM exam_sessions es
+            WHERE es.id = (
+                SELECT ep.session_id
+                FROM exam_progress ep
+                WHERE ep.user_id = %s AND ep.session_id IS NOT NULL
+                ORDER BY ep.id DESC
+                LIMIT 1
+            )
             """,
             (session["user_id"],),
         )
+        report_session = cur.fetchone()
+
+    if report_session:
+        selected_questions = resolve_exam_question_ids(conn, report_session)
+
+    cur = conn.cursor()
+
+    if report_session and selected_questions:
+        cur.execute(
+            """
+            SELECT q.title,
+                   CASE
+                       WHEN ep.status = 'completed' THEN COALESCE(
+                           ep.verdict,
+                           CASE WHEN COALESCE(ep.score, 0) = 100 THEN 'PASS' ELSE 'FAIL' END
+                       )
+                       WHEN ep.status IS NULL THEN 'NO ATTEMPT'
+                       ELSE UPPER(ep.status)
+                   END as verdict,
+                   COALESCE(ep.score, 0) as score
+            FROM questions q
+            LEFT JOIN exam_progress ep
+                   ON ep.question_id = q.id
+                  AND ep.user_id = %s
+                  AND ep.session_id = %s
+            WHERE q.id = ANY(%s)
+            ORDER BY array_position(%s::int[], q.id)
+            """,
+            (session["user_id"], report_session["id"], selected_questions, selected_questions),
+        )
+    else:
+        rows = []
+        total = 0
+        close_db(conn)
+        return render_template("report.html", rows=rows, total=total, back_url=back_url)
     
     rows = cur.fetchall()
     total = sum(r[2] for r in rows if r[2] and r[1] != 'NO ATTEMPT') if rows else 0
     
     close_db(conn)
     
-    return render_template("report.html", rows=rows, total=total)
+    return render_template("report.html", rows=rows, total=total, back_url=back_url)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

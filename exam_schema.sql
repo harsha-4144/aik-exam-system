@@ -33,6 +33,10 @@ ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT FAL
 ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS paused_at TIMESTAMP;
 ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS participant_limit INTEGER DEFAULT 0;
 ALTER TABLE exam_sessions ADD COLUMN IF NOT EXISTS auto_start_when_all_ready BOOLEAN DEFAULT FALSE;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS display_order INTEGER;
+UPDATE questions
+SET display_order = id
+WHERE display_order IS NULL;
 
 ALTER TABLE exam_progress ADD COLUMN IF NOT EXISTS session_id INTEGER REFERENCES exam_sessions(id) ON DELETE CASCADE;
 
@@ -50,3 +54,18 @@ CREATE TABLE IF NOT EXISTS exam_settings (
 INSERT INTO exam_settings(setting_key, setting_value)
 VALUES ('questions_hidden', '0')
 ON CONFLICT (setting_key) DO NOTHING;
+
+-- Per-submission test case results (admin reporting)
+CREATE TABLE IF NOT EXISTS submission_test_results (
+    id SERIAL PRIMARY KEY,
+    submission_id INTEGER NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+    test_case_id INTEGER,
+    case_type TEXT NOT NULL,
+    input_data TEXT,
+    expected_output TEXT,
+    actual_output TEXT,
+    status TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS ix_submission_test_results_submission
+    ON submission_test_results(submission_id);

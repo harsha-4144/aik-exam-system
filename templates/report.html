@@ -31,10 +31,73 @@
             color: white;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             padding: 0 24px;
             font-size: 18px;
             font-weight: 600;
             border-bottom: 1px solid #000;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-menu summary {
+            list-style: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(148, 163, 184, 0.16);
+            color: #e2ebfa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu summary::-webkit-details-marker { display: none; }
+        .profile-menu summary:hover {
+            background: rgba(59, 130, 246, 0.35);
+            border-color: rgba(96, 165, 250, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            z-index: 20;
+        }
+
+        .profile-dropdown a {
+            display: block;
+            margin: 0;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            color: #e2ebfa;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .profile-dropdown a:hover {
+            background: rgba(59, 130, 246, 0.25);
         }
 
         /* ---------- PAGE ---------- */
@@ -115,7 +178,19 @@
 <body>
 
 <div class="header">
-    Coding Exam - Final Report
+    <div>Coding Exam - Final Report</div>
+    <div class="header-right">
+        <details class="profile-menu">
+            <summary aria-label="Profile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1c-2.761 0-5 1.79-5 4v1h10v-1c0-2.21-2.239-4-5-4z"/>
+                </svg>
+            </summary>
+            <div class="profile-dropdown">
+                <a href="/logout">Logout</a>
+            </div>
+        </details>
+    </div>
 </div>
 
 <div class="page">
@@ -151,10 +226,26 @@
         </div>
 
         <div class="actions">
-            <a href="/" class="button">Back to Questions</a>
+            <a href="{{ back_url }}" class="button">Back to Home</a>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("click", function (e) {
+    document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+        if (!menu.contains(e.target)) menu.removeAttribute("open");
+    });
+});
+
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".profile-menu[open]").forEach(function (menu) {
+            menu.removeAttribute("open");
+        });
+    }
+});
+</script>
 
 </body>
 </html>
